@@ -70,6 +70,9 @@ nav{background:rgba(255,255,255,.88);backdrop-filter:saturate(180%) blur(12px);-
 .media-shot.media-frame::after{content:"";position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 6px rgba(255,255,255,.9),0 20px 50px rgba(11,95,43,.28);pointer-events:none}
 .media-wide{margin:8px auto 0;max-width:620px}
 .media-wide img{width:100%;height:auto;display:block;border-radius:16px;box-shadow:var(--shadow-soft)}
+.abstract-sec{padding:40px 24px;background:var(--branco)}
+.abstract-band{max-width:1000px;margin:0 auto;border-radius:22px;overflow:hidden;box-shadow:var(--shadow-soft);line-height:0}
+.abstract-band svg{width:100%;height:auto;display:block}
 
 /* NUMEROS */
 .numeros{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--borda)}
@@ -435,6 +438,36 @@ footer{padding:32px 24px;text-align:center;background:var(--texto);border-top:1p
 </section>
 
 
+<!-- IMAGEM ABSTRATA 1 -->
+<section class="abstract-sec">
+  <figure class="abstract-band reveal">
+    <svg viewBox="0 0 1200 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Composição abstrata em tons de verde e dourado">
+      <defs>
+        <linearGradient id="ab1bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#0a4d21"/><stop offset="55%" stop-color="#0b5f2b"/><stop offset="100%" stop-color="#15a24a"/>
+        </linearGradient>
+        <linearGradient id="ab1gold" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#FFC132"/><stop offset="100%" stop-color="#F08800"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="240" fill="url(#ab1bg)"/>
+      <circle cx="1000" cy="60" r="150" fill="url(#ab1gold)" opacity=".28"/>
+      <circle cx="1075" cy="35" r="70" fill="#FFC132" opacity=".45"/>
+      <path d="M0,150 C180,95 360,205 600,150 S1010,95 1200,160 L1200,240 L0,240 Z" fill="#ffffff" opacity=".10"/>
+      <path d="M0,185 C240,140 420,235 690,185 S1060,140 1200,195 L1200,240 L0,240 Z" fill="#15a24a" opacity=".35"/>
+      <path d="M0,212 C260,180 480,250 760,214 S1080,178 1200,220 L1200,240 L0,240 Z" fill="#ffffff" opacity=".08"/>
+      <g fill="#ffffff" opacity=".55">
+        <circle cx="120" cy="60" r="4"/><circle cx="210" cy="110" r="3"/><circle cx="90" cy="150" r="2.5"/>
+        <circle cx="300" cy="70" r="3"/><circle cx="420" cy="120" r="2.5"/><circle cx="520" cy="60" r="3.5"/>
+        <circle cx="640" cy="105" r="2.5"/><circle cx="760" cy="70" r="3"/><circle cx="860" cy="120" r="2.5"/>
+      </g>
+      <g fill="#FFC132" opacity=".8">
+        <circle cx="160" cy="95" r="2.5"/><circle cx="360" cy="95" r="2.5"/><circle cx="560" cy="100" r="2.5"/><circle cx="700" cy="55" r="2.5"/>
+      </g>
+    </svg>
+  </figure>
+</section>
+
 <!-- SITUAÇÕES -->
 <section class="situacoes-info">
   <div class="sit-info-inner">
@@ -534,7 +567,6 @@ footer{padding:32px 24px;text-align:center;background:var(--texto);border-top:1p
       <div class="dec-card"><div class="dec-estado">Mato Grosso</div><div class="dec-valor">R$ 4.687</div><div class="dec-badge">Valor devolvido</div></div>
 
       <div class="dec-card"><div class="dec-estado">Distrito Federal</div><div class="dec-valor">R$ 347.086</div><div class="dec-badge">Valor devolvido</div></div>
-      <div class="dec-card"><div class="dec-estado">São Paulo</div><div class="dec-valor">R$ 456k+</div><div class="dec-badge">Valor devolvido</div></div>
       <div class="dec-card"><div class="dec-estado">Santa Catarina</div><div class="dec-valor">R$ 217.835</div><div class="dec-badge">Valor devolvido</div></div>
     </div>
   </div>
@@ -683,6 +715,42 @@ footer{padding:32px 24px;text-align:center;background:var(--texto);border-top:1p
   </div>
 </section>
 
+<!-- IMAGEM ABSTRATA 2 -->
+<section class="abstract-sec" style="background:var(--cinza)">
+  <figure class="abstract-band reveal">
+    <svg viewBox="0 0 1200 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Composição geométrica abstrata em tons de dourado e verde">
+      <defs>
+        <linearGradient id="ab2bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff7e8"/><stop offset="100%" stop-color="#fde8c4"/>
+        </linearGradient>
+        <linearGradient id="ab2green" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#15a24a"/><stop offset="100%" stop-color="#0a4d21"/>
+        </linearGradient>
+        <linearGradient id="ab2gold" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#FFC132"/><stop offset="100%" stop-color="#F08800"/>
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="240" fill="url(#ab2bg)"/>
+      <g fill="none" stroke="#F08800" opacity=".35">
+        <circle cx="140" cy="120" r="40" stroke-width="8"/>
+        <circle cx="140" cy="120" r="70" stroke-width="4" opacity=".6"/>
+        <circle cx="140" cy="120" r="100" stroke-width="2" opacity=".4"/>
+      </g>
+      <polygon points="1060,40 1160,200 960,200" fill="url(#ab2green)" opacity=".85"/>
+      <polygon points="1000,110 1070,200 930,200" fill="url(#ab2gold)" opacity=".9"/>
+      <rect x="470" y="70" width="90" height="90" rx="16" transform="rotate(20 515 115)" fill="url(#ab2gold)" opacity=".85"/>
+      <rect x="600" y="90" width="70" height="70" rx="12" transform="rotate(-15 635 125)" fill="url(#ab2green)" opacity=".7"/>
+      <g fill="#0b5f2b" opacity=".5">
+        <circle cx="330" cy="60" r="5"/><circle cx="370" cy="60" r="5"/><circle cx="410" cy="60" r="5"/>
+        <circle cx="330" cy="100" r="5"/><circle cx="370" cy="100" r="5"/><circle cx="410" cy="100" r="5"/>
+        <circle cx="330" cy="140" r="5"/><circle cx="370" cy="140" r="5"/><circle cx="410" cy="140" r="5"/>
+      </g>
+      <path d="M760,190 C820,130 880,250 960,190" fill="none" stroke="#15a24a" stroke-width="6" stroke-linecap="round" opacity=".55"/>
+      <path d="M180,205 C300,175 420,235 560,205 S820,175 1020,210" fill="none" stroke="#F08800" stroke-width="3" opacity=".4"/>
+    </svg>
+  </figure>
+</section>
+
 <!-- CTA FINAL -->
 <section class="cta-final" style="background:linear-gradient(135deg,var(--verde) 0%,var(--verde2) 60%,#1a0a0a 100%)">
   <h2>Pronto para descobrir se você tem caso?</h2>
@@ -823,8 +891,8 @@ function faq(btn){
       '.passo','.sit-card','.dec-card','.not-card','.faq-item',
       '.auto-reveal > div','.media-shot'
     ].forEach(marcar);
-    // garante que imagens já observadas sejam reveladas
-    document.querySelectorAll('.media-shot.reveal').forEach(function(el){io.observe(el);});
+    // observa também elementos já marcados com .reveal (imagens e faixas abstratas)
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
   });
 })();
 </script>
