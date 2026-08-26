@@ -77,6 +77,7 @@ function App() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [notes, setNotes] = useState({});
+  const [learned, setLearned] = useState({});
   const [editing, setEditing] = useState(null);
   const [noteInput, setNoteInput] = useState("");
   const [tense, setTense] = useState("Simple Present");
@@ -97,17 +98,21 @@ function App() {
   useEffect(() => {
     if (!profile) return;
     try { const s = localStorage.getItem("eng_notes_"+profile); if(s) setNotes(JSON.parse(s)); else setNotes({}); } catch { setNotes({}); }
+    try { const l = localStorage.getItem("eng_learned_"+profile); if(l) setLearned(JSON.parse(l)); else setLearned({}); } catch { setLearned({}); }
   }, [profile]);
 
   const saveNotes = (n) => { setNotes(n); if(profile) localStorage.setItem("eng_notes_"+profile, JSON.stringify(n)); };
   const openNote = (id) => { setEditing(id); setNoteInput(notes[id] || ""); };
   const submitNote = () => { const n={...notes}; if(noteInput.trim()) n[editing]=noteInput.trim(); else delete n[editing]; saveNotes(n); setEditing(null); };
-  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); };
+  const saveLearned = (l) => { setLearned(l); if(profile) localStorage.setItem("eng_learned_"+profile, JSON.stringify(l)); };
+  const toggleLearned = (id) => { const l={...learned}; if(l[id]) delete l[id]; else l[id]=1; saveLearned(l); };
+  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setLearned({}); };
 
   const newRound = (ids) => {
-    var pool = (ids && ids.length)
-      ? W.filter(function(w){return ids.indexOf(w[0])>=0;})
-      : W.filter(function(w){return quizCat==="all"||w[4]===quizCat;});
+    var pool;
+    if (ids && ids.length) pool = W.filter(function(w){return ids.indexOf(w[0])>=0;});
+    else if (quizMode==="review") pool = W.filter(function(w){return learned[w[0]] && (quizCat==="all"||w[4]===quizCat);});
+    else pool = W.filter(function(w){return quizCat==="all"||w[4]===quizCat;});
     var lim = ids ? pool.length : Math.min(pool.length, ROUND_SIZE);
     setDeck(shuffle(pool).slice(0, lim));
     setDeckIdx(0); setFlipped(false); setQuizDone(false); setMcPicked(null);
@@ -156,6 +161,8 @@ function App() {
   const catLabel = (id) => { const c=CATS.find(c=>c.id===id); return c?c.label.split(" ").slice(1).join(" "):id; };
   const filteredHomo = HOMO.filter(h=>!homoSearch||h.w.toLowerCase().includes(homoSearch.toLowerCase()));
   const notedWords = W.filter(w=>notes[w[0]]);
+  const learnedWords = W.filter(w=>learned[w[0]]);
+  const learnedCount = learnedWords.length;
   const tenses = Object.keys(PHRASES);
   const btn = (cond) => ({padding:"7px 14px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:cond?"#3B82F6":"#1E293B",color:cond?"#fff":"#94A3B8"});
   const qFrontIdx = quizDir==="en2pt"?1:2;
@@ -168,10 +175,10 @@ function App() {
       h("div",{style:{maxWidth:1200,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}},
         h("div",null,
           h("div",{style:{fontWeight:800,fontSize:18,color:"#60A5FA"}},"🎓 Inglês Intensivo"),
-          h("div",{style:{fontSize:10,color:"#475569"}}, W.length+" palavras · 👤 "+profileName+(Object.keys(notes).length>0?" · "+Object.keys(notes).length+" anotações ✓":""))
+          h("div",{style:{fontSize:10,color:"#475569"}}, W.length+" palavras · 👤 "+profileName+(learnedCount>0?" · 🎓 "+learnedCount+" aprendidas":"")+(Object.keys(notes).length>0?" · "+Object.keys(notes).length+" anotações ✓":""))
         ),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
-          [["vocab","📚 Vocab"],["phrases","💬 Verbos"],["homo","🔄 Homônimos"],["quiz","🃏 Quiz"],["mynotes","📝 Notas"]].map(function(t){return h("button",{key:t[0],onClick:function(){setTab(t[0])},style:btn(tab===t[0])},t[1])}),
+          [["vocab","📚 Vocab"],["phrases","💬 Verbos"],["homo","🔄 Homônimos"],["quiz","🃏 Quiz"],["learned","🎓 Aprendidas"],["mynotes","📝 Notas"]].map(function(t){return h("button",{key:t[0],onClick:function(){setTab(t[0])},style:btn(tab===t[0])},t[1])}),
           h("button",{onClick:logout,style:{padding:"5px 10px",borderRadius:8,background:"#7F1D1D",border:"none",color:"#FCA5A5",cursor:"pointer",fontSize:10,marginLeft:4}},"Sair")
         )
       )
@@ -191,11 +198,11 @@ function App() {
         h("div",{style:{overflowX:"auto"}},
           h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
             h("thead",null,h("tr",{style:{background:"#1E293B"}},
-              ["#","🇬🇧","🇧🇷","Exemplo","Cat.","Extra","📝"].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontWeight:700,whiteSpace:"nowrap",fontSize:11}},hd)})
+              ["#","🇬🇧","🇧🇷","Exemplo","Cat.","Extra","🎓","📝"].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontWeight:700,whiteSpace:"nowrap",fontSize:11}},hd)})
             )),
             h("tbody",null,pageWords.map(function(w,i){
               var id=w[0],en=w[1],pt=w[2],ex=w[3],c=w[4],extra=w[5];
-              var hasNote=!!notes[id],isEd=editing===id;
+              var hasNote=!!notes[id],isEd=editing===id,isLearned=!!learned[id];
               return h("tr",{key:id,style:{background:i%2===0?"#0F172A":"#0d1525",borderBottom:"1px solid #1a2540"}},
                 h("td",{style:{padding:"5px 4px",color:"#334155",fontWeight:600,fontSize:10}},id),
                 h("td",{style:{padding:"5px 4px",fontWeight:700,color:"#E2E8F0",whiteSpace:"nowrap"}},en),
@@ -203,6 +210,9 @@ function App() {
                 h("td",{style:{padding:"5px 4px",color:"#475569",fontStyle:"italic",fontSize:10,maxWidth:180}},ex),
                 h("td",{style:{padding:"5px 4px"}},h("span",{style:{padding:"1px 6px",borderRadius:8,fontSize:9,fontWeight:700,background:catColor(c)+"1a",color:catColor(c),whiteSpace:"nowrap"}},catLabel(c))),
                 h("td",{style:{padding:"5px 4px",color:"#334155",fontSize:9,fontFamily:"monospace",whiteSpace:"nowrap",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis"}},extra),
+                h("td",{style:{padding:"5px 4px"}},
+                  h("button",{onClick:function(){toggleLearned(id)},title:isLearned?"Remover de aprendidas":"Marcar como aprendida",style:{padding:"2px 7px",borderRadius:5,border:"1px solid",cursor:"pointer",fontSize:10,fontWeight:600,borderColor:isLearned?"#22C55E":"#1E3A5F",background:isLearned?"#22C55E1a":"transparent",color:isLearned?"#4ADE80":"#334155"}},isLearned?"🎓✓":"🎓")
+                ),
                 h("td",{style:{padding:"5px 4px",minWidth:100}},
                   isEd?h("div",{style:{display:"flex",gap:3,alignItems:"center"}},
                     h("input",{value:noteInput,onChange:function(e){setNoteInput(e.target.value)},onKeyDown:function(e){if(e.key==="Enter")submitNote();if(e.key==="Escape")setEditing(null)},autoFocus:true,placeholder:"Nota...",style:{padding:"3px 6px",borderRadius:5,border:"1px solid #3B82F6",background:"#1E293B",color:"#E2E8F0",fontSize:10,width:100,outline:"none"}}),
@@ -276,7 +286,8 @@ function App() {
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,alignItems:"center"}},
           h("div",{style:{display:"flex",gap:4}},
             h("button",{onClick:function(){setQuizMode("flash")},style:btn(quizMode==="flash")},"🃏 Flashcards"),
-            h("button",{onClick:function(){setQuizMode("test")},style:btn(quizMode==="test")},"✍️ Quiz")
+            h("button",{onClick:function(){setQuizMode("test")},style:btn(quizMode==="test")},"✍️ Quiz"),
+            h("button",{onClick:function(){setQuizMode("review")},style:btn(quizMode==="review")},"🎓 Revisar aprendidas")
           ),
           h("div",{style:{flex:1}}),
           h("button",{onClick:function(){setQuizDir(quizDir==="en2pt"?"pt2en":"en2pt")},style:{padding:"6px 12px",borderRadius:8,border:"1px solid #334155",background:"#1E293B",color:"#94A3B8",cursor:"pointer",fontSize:11,fontWeight:600}}, quizDir==="en2pt"?"🇬🇧 → 🇧🇷":"🇧🇷 → 🇬🇧"),
@@ -288,18 +299,18 @@ function App() {
         deck.length>0 && h("div",{style:{marginBottom:14}},
           h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,color:"#64748B",marginBottom:4}},
             h("span",null, quizDone?"Concluído!":("Carta "+(deckIdx+1)+" de "+deck.length)),
-            h("span",null, quizMode==="flash"?("✅ "+flashStats.know+"   ❌ "+flashStats.dontknow):("✅ "+mcStats.correct+"   ❌ "+mcStats.wrong))
+            h("span",null, quizMode==="test"?("✅ "+mcStats.correct+"   ❌ "+mcStats.wrong):("✅ "+flashStats.know+"   ❌ "+flashStats.dontknow))
           ),
           h("div",{style:{height:6,background:"#1E293B",borderRadius:4,overflow:"hidden"}},
             h("div",{style:{height:"100%",width:((quizDone?100:Math.round((deckIdx/deck.length)*100))+"%"),background:"linear-gradient(90deg,#3B82F6,#60A5FA)",transition:"width .2s"}})
           )
         ),
-        deck.length===0 && h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#475569",fontSize:13}},"Nenhuma palavra nesta categoria."),
+        deck.length===0 && h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#475569",fontSize:13}}, quizMode==="review"?"Nenhuma palavra aprendida ainda. Marque palavras com 🎓 na aba Vocab ou nos flashcards.":"Nenhuma palavra nesta categoria."),
 
         (deck.length>0 && quizDone) && (function(){
-          var kn = quizMode==="flash"?flashStats.know:mcStats.correct;
-          var un = quizMode==="flash"?flashStats.dontknow:mcStats.wrong;
-          var wrongIds = quizMode==="flash"?flashStats.wrongIds:mcStats.wrongIds;
+          var kn = quizMode==="test"?mcStats.correct:flashStats.know;
+          var un = quizMode==="test"?mcStats.wrong:flashStats.dontknow;
+          var wrongIds = quizMode==="test"?mcStats.wrongIds:flashStats.wrongIds;
           var pct = deck.length?Math.round((kn/deck.length)*100):0;
           return h("div",{style:{textAlign:"center",padding:"24px 20px",background:"#1E293B",borderRadius:14,border:"1px solid #1E3A5F"}},
             h("div",{style:{fontSize:44,marginBottom:6}}, pct>=80?"🏆":pct>=50?"👍":"📚"),
@@ -313,8 +324,9 @@ function App() {
           );
         })(),
 
-        (deck.length>0 && !quizDone && quizMode==="flash" && qCur) && h("div",null,
-          h("div",{onClick:function(){setFlipped(!flipped)},style:{background:flipped?"#0d2b4a":"#1E293B",borderRadius:16,border:"2px solid "+(flipped?"#3B82F6":"#1E3A5F"),padding:"38px 24px",minHeight:190,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",textAlign:"center",transition:"all .15s"}},
+        (deck.length>0 && !quizDone && (quizMode==="flash"||quizMode==="review") && qCur) && h("div",null,
+          h("div",{onClick:function(){setFlipped(!flipped)},style:{position:"relative",background:flipped?"#0d2b4a":"#1E293B",borderRadius:16,border:"2px solid "+(flipped?"#3B82F6":"#1E3A5F"),padding:"38px 24px",minHeight:190,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",textAlign:"center",transition:"all .15s"}},
+            learned[qCur[0]] && h("div",{style:{position:"absolute",top:10,right:12,fontSize:10,fontWeight:700,color:"#4ADE80",background:"#22C55E1a",border:"1px solid #166534",borderRadius:12,padding:"2px 8px"}},"🎓 Aprendida"),
             h("div",{style:{fontSize:10,color:"#475569",marginBottom:10,textTransform:"uppercase",letterSpacing:1}}, flipped?"Resposta":"Clique para revelar"),
             h("div",{style:{fontSize:30,fontWeight:800,color:"#E2E8F0",marginBottom:flipped?14:0}}, qCur[qFrontIdx]),
             flipped && h("div",{style:{fontSize:22,fontWeight:700,color:"#60A5FA",marginBottom:10}}, qCur[qBackIdx]),
@@ -322,8 +334,13 @@ function App() {
             flipped && qCur[5] && h("div",{style:{fontSize:11,color:"#475569",fontFamily:"monospace"}}, qCur[5])
           ),
           h("div",{style:{display:"flex",gap:8,marginTop:14}},
-            h("button",{onClick:function(){flashAnswer(false)},style:{flex:1,padding:"12px",borderRadius:10,background:"#3b0e0e",border:"1px solid #7F1D1D",color:"#F87171",cursor:"pointer",fontSize:14,fontWeight:700}},"❌ Não sabia"),
-            h("button",{onClick:function(){flashAnswer(true)},style:{flex:1,padding:"12px",borderRadius:10,background:"#0e3b1e",border:"1px solid #166534",color:"#4ADE80",cursor:"pointer",fontSize:14,fontWeight:700}},"✅ Sabia")
+            h("button",{onClick:function(){flashAnswer(false)},style:{flex:1,padding:"12px",borderRadius:10,background:"#3b0e0e",border:"1px solid #7F1D1D",color:"#F87171",cursor:"pointer",fontSize:14,fontWeight:700}}, quizMode==="review"?"❌ Rever mais":"❌ Não sabia"),
+            h("button",{onClick:function(){flashAnswer(true)},style:{flex:1,padding:"12px",borderRadius:10,background:"#0e3b1e",border:"1px solid #166534",color:"#4ADE80",cursor:"pointer",fontSize:14,fontWeight:700}}, quizMode==="review"?"✅ Domino":"✅ Sabia")
+          ),
+          h("div",{style:{marginTop:8}},
+            quizMode==="review"
+              ? h("button",{onClick:function(){var cur=qCur;toggleLearned(cur[0]);advance();},style:{width:"100%",padding:"10px",borderRadius:10,background:"transparent",border:"1px dashed #7F1D1D",color:"#F87171",cursor:"pointer",fontSize:12,fontWeight:600}},"➖ Remover das aprendidas")
+              : h("button",{onClick:function(){var cur=qCur;if(!learned[cur[0]])toggleLearned(cur[0]);advance();},style:{width:"100%",padding:"10px",borderRadius:10,background:learned[qCur[0]]?"#22C55E1a":"transparent",border:"1px solid "+(learned[qCur[0]]?"#166534":"#1E3A5F"),color:learned[qCur[0]]?"#4ADE80":"#64748B",cursor:"pointer",fontSize:12,fontWeight:600}}, learned[qCur[0]]?"🎓 Já está em Aprendidas — avançar":"🎓 Já aprendi esta palavra")
           ),
           h("div",{style:{textAlign:"center",fontSize:10,color:"#334155",marginTop:8}},"Dica: clique na carta para virar")
         ),
@@ -346,6 +363,44 @@ function App() {
           ),
           mcPicked!==null && h("button",{onClick:function(){advance()},style:{width:"100%",marginTop:14,padding:"12px",borderRadius:10,background:"#3B82F6",border:"none",color:"#fff",cursor:"pointer",fontSize:14,fontWeight:700}}, deckIdx+1>=deck.length?"Ver resultado →":"Próxima →")
         )
+      ),
+
+      // LEARNED TAB
+      tab==="learned" && h("div",null,
+        learnedWords.length===0?
+          h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#334155"}},
+            h("div",{style:{fontSize:48,marginBottom:10}},"🎓"),
+            h("p",{style:{fontSize:14,color:"#475569"}},"Nenhuma palavra aprendida de "+profileName+"."),
+            h("p",{style:{fontSize:12,color:"#334155"}},"Na aba Vocab (ou nos flashcards), clique 🎓 para marcar uma palavra como aprendida.")
+          ):
+          h("div",null,
+            h("div",{style:{display:"flex",gap:8,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",marginBottom:12}},
+              h("div",{style:{fontSize:12,color:"#64748B"}},
+                h("strong",{style:{color:"#4ADE80"}},learnedWords.length)," palavras aprendidas de ",h("strong",{style:{color:"#F59E0B"}},profileName)
+              ),
+              h("button",{onClick:function(){setQuizMode("review");setQuizCat("all");setTab("quiz");},style:{padding:"8px 14px",borderRadius:10,background:"#22C55E1a",border:"1px solid #166534",color:"#4ADE80",cursor:"pointer",fontSize:12,fontWeight:700}},"🃏 Revisar em flashcards")
+            ),
+            h("div",{style:{overflowX:"auto"}},
+              h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+                h("thead",null,h("tr",{style:{background:"#1E293B"}},
+                  ["#","🇬🇧","🇧🇷","Exemplo","Cat.",""].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontSize:11}},hd)})
+                )),
+                h("tbody",null,learnedWords.map(function(w,i){
+                  var id=w[0],en=w[1],pt=w[2],ex=w[3],c=w[4];
+                  return h("tr",{key:id,style:{background:i%2===0?"#0F172A":"#0d1525",borderBottom:"1px solid #1a2540"}},
+                    h("td",{style:{padding:"6px",color:"#334155",fontSize:10}},id),
+                    h("td",{style:{padding:"6px",fontWeight:700,color:"#E2E8F0",whiteSpace:"nowrap"}},en),
+                    h("td",{style:{padding:"6px",color:"#94A3B8",fontSize:11}},pt),
+                    h("td",{style:{padding:"6px",color:"#475569",fontStyle:"italic",fontSize:10,maxWidth:180}},ex),
+                    h("td",{style:{padding:"6px"}},h("span",{style:{padding:"1px 6px",borderRadius:8,fontSize:9,fontWeight:700,background:catColor(c)+"1a",color:catColor(c),whiteSpace:"nowrap"}},catLabel(c))),
+                    h("td",{style:{padding:"6px"}},
+                      h("button",{onClick:function(){toggleLearned(id)},title:"Remover das aprendidas",style:{padding:"2px 7px",borderRadius:5,background:"#3b0e0e",border:"none",color:"#F87171",cursor:"pointer",fontSize:10}},"➖")
+                    )
+                  )
+                }))
+              )
+            )
+          )
       ),
 
       // NOTES TAB
