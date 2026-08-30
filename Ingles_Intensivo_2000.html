@@ -34,6 +34,24 @@ const PHRASES = window.__PHRASES__;
 const PER_PAGE = 50;
 function shuffle(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
 const ROUND_SIZE = 20;
+function todayStr(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+// temas de conversação por categoria (para praticar com Gemini/Grok)
+const THEME_MAP = {
+  food:"Pedir comida em um restaurante", kitchen:"Cozinhar uma receita com um amigo",
+  travel:"Planejar uma viagem de férias", transport:"Se locomover pela cidade (Uber, ônibus, direções)",
+  work:"Falar sobre a sua rotina de trabalho", professions:"Uma entrevista de emprego",
+  family:"Apresentar e falar sobre a sua família", health:"Uma consulta com o médico",
+  money:"Fazer compras e falar sobre dinheiro", school:"Falar sobre os estudos e a escola",
+  sports:"Comentar um jogo ou o seu esporte favorito", tech:"Falar sobre tecnologia e aplicativos",
+  clothes:"Comprar roupas em uma loja", home:"Descrever a sua casa e os cômodos",
+  city:"Dar e pedir direções na cidade", weather:"Falar sobre o clima e os planos do fim de semana",
+  animals:"Falar sobre animais e pets", emotions:"Descrever como você está se sentindo hoje",
+  slang:"Um bate-papo bem informal com amigos, usando gírias", custom:"Um tema livre com as suas palavras",
+  daily:"Descrever a sua rotina do dia a dia", entertainment:"Recomendar um filme ou uma série",
+  time:"Marcar um compromisso e combinar horários", verb:"Contar o que você fez ontem e o que fará amanhã",
+  adjective:"Descrever pessoas, lugares e objetos", body:"Falar sobre saúde e partes do corpo",
+  expression:"Reagir a notícias usando expressões comuns", phrasal_verb:"Uma conversa casual usando phrasal verbs"
+};
 // Gírias / contrações / inglês informal (ids a partir de 90001 para não colidir)
 const SLANG = [
   [90001,"wanna","quer / vou (want to)","I wanna go home.","slang","= want to"],
@@ -122,6 +140,10 @@ function App() {
   const [status, setStatus] = useState({});
   const [custom, setCustom] = useState([]);
   const [progFilter, setProgFilter] = useState("review");
+  const [daily, setDaily] = useState({date:"",count:0});
+  const [goal, setGoal] = useState(10);
+  const [convTheme, setConvTheme] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [slangSearch, setSlangSearch] = useState("");
   const [newEn, setNewEn] = useState("");
   const [newPt, setNewPt] = useState("");
@@ -148,6 +170,9 @@ function App() {
     if (!profile) return;
     try { const s = localStorage.getItem("eng_notes_"+profile); if(s) setNotes(JSON.parse(s)); else setNotes({}); } catch { setNotes({}); }
     try { const c = localStorage.getItem("eng_custom_"+profile); if(c) setCustom(JSON.parse(c)); else setCustom([]); } catch { setCustom([]); }
+    try { const d = localStorage.getItem("eng_daily_"+profile); if(d){ const dd=JSON.parse(d); setDaily(dd.date===todayStr()?dd:{date:todayStr(),count:0}); } else setDaily({date:todayStr(),count:0}); } catch { setDaily({date:todayStr(),count:0}); }
+    try { const g = localStorage.getItem("eng_goal_"+profile); if(g) setGoal(parseInt(g)||10); else setGoal(10); } catch { setGoal(10); }
+    setConvTheme(null);
     try {
       const st = localStorage.getItem("eng_status_"+profile);
       if(st){ setStatus(JSON.parse(st)); }
@@ -179,7 +204,13 @@ function App() {
     setNewEn(""); setNewPt(""); setNewEx("");
   };
   const removeCustom = (id) => { saveCustom(custom.filter(function(w){return w[0]!==id;})); const s={...status}; delete s[id]; saveStatus(s); };
-  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setStatus({}); setCustom([]); };
+  const saveGoal = (g) => { var v=Math.max(1,Math.min(200,g||1)); setGoal(v); if(profile) localStorage.setItem("eng_goal_"+profile, String(v)); };
+  const bumpDaily = () => {
+    var t=todayStr();
+    var d = (daily.date===t) ? {date:t,count:daily.count+1} : {date:t,count:1};
+    setDaily(d); if(profile) localStorage.setItem("eng_daily_"+profile, JSON.stringify(d));
+  };
+  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setStatus({}); setCustom([]); setConvTheme(null); };
 
   const newRound = (ids) => {
     var pool;
@@ -199,11 +230,13 @@ function App() {
   const flashAnswer = (know) => {
     var cur = deck[deckIdx]; if(!cur) return;
     setFlashStats(function(s){return {know:s.know+(know?1:0), dontknow:s.dontknow+(know?0:1), wrongIds: know?s.wrongIds:s.wrongIds.concat([cur[0]])};});
+    bumpDaily();
     advance();
   };
   const mcAnswer = (opt) => {
     var cur = deck[deckIdx]; if(!cur || mcPicked!==null) return;
     setMcPicked(opt);
+    bumpDaily();
     var ok = opt === cur[quizDir==="en2pt"?2:1];
     setMcStats(function(s){return {correct:s.correct+(ok?1:0), wrong:s.wrong+(ok?0:1), wrongIds: ok?s.wrongIds:s.wrongIds.concat([cur[0]])};});
   };
@@ -250,6 +283,41 @@ function App() {
     h("option",{value:"review"},"🔖 Fixar"),
     h("option",{value:"learned"},"🎓 Aprendi")
   ); };
+  const todayCount = (daily.date===todayStr()) ? daily.count : 0;
+  const goalPct = Math.min(100, Math.round((todayCount/Math.max(1,goal))*100));
+  const dailyBar = () => h("div",{style:{background:"#1E293B",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid "+(todayCount>=goal?"#166534":"#1E3A5F")}},
+    h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:6}},
+      h("div",{style:{fontSize:12,fontWeight:700,color:todayCount>=goal?"#4ADE80":"#60A5FA"}}, todayCount>=goal?"🎉 Meta diária concluída!":"🎯 Meta diária de revisão"),
+      h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        h("span",{style:{fontSize:12,color:"#94A3B8"}}, todayCount+" / "+goal+" hoje"),
+        h("button",{onClick:function(){saveGoal(goal-5)},style:{padding:"1px 8px",borderRadius:6,background:"#0F172A",border:"1px solid #334155",color:"#94A3B8",cursor:"pointer",fontSize:13,fontWeight:700}},"−"),
+        h("button",{onClick:function(){saveGoal(goal+5)},style:{padding:"1px 8px",borderRadius:6,background:"#0F172A",border:"1px solid #334155",color:"#94A3B8",cursor:"pointer",fontSize:13,fontWeight:700}},"+")
+      )
+    ),
+    h("div",{style:{height:8,background:"#0F172A",borderRadius:5,overflow:"hidden"}},
+      h("div",{style:{height:"100%",width:goalPct+"%",background:todayCount>=goal?"linear-gradient(90deg,#22C55E,#4ADE80)":"linear-gradient(90deg,#3B82F6,#60A5FA)",transition:"width .3s"}})
+    )
+  );
+  const buildConversation = () => {
+    if(reviewWords.length===0){ setConvTheme(null); return; }
+    var picked = shuffle(reviewWords).slice(0, Math.min(12, reviewWords.length));
+    var counts={}; picked.forEach(function(w){counts[w[4]]=(counts[w[4]]||0)+1;});
+    var mainCat=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];})[0];
+    var theme = THEME_MAP[mainCat] || "Uma conversa do dia a dia";
+    var wl = picked.map(function(w){return w[1]+" ("+w[2]+")";});
+    var prompt = "Let's practice English conversation. I'm a Brazilian learner practicing new vocabulary.\n\n"
+      + "Topic: "+theme+".\n\n"
+      + "Please have a natural, simple conversation with me about this topic. Try to use the words below, one or two at a time. After each of my replies, gently correct my mistakes and ask me a follow-up question to keep the conversation going.\n\n"
+      + "Words I'm learning:\n"+wl.join(", ")+"\n\n"
+      + "Start by greeting me and asking the first question.";
+    setConvTheme({theme:theme, words:picked, prompt:prompt});
+    setCopied(false);
+  };
+  const copyPrompt = () => {
+    if(!convTheme) return;
+    try { navigator.clipboard.writeText(convTheme.prompt).then(function(){setCopied(true);setTimeout(function(){setCopied(false)},2000);}); }
+    catch(e){ try{ var ta=document.createElement("textarea");ta.value=convTheme.prompt;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);setCopied(true);setTimeout(function(){setCopied(false)},2000);}catch(e2){} }
+  };
   const btn = (cond) => ({padding:"7px 14px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:cond?"#3B82F6":"#1E293B",color:cond?"#fff":"#94A3B8"});
   const qFrontIdx = quizDir==="en2pt"?1:2;
   const qBackIdx = quizDir==="en2pt"?2:1;
@@ -373,6 +441,7 @@ function App() {
 
       // QUIZ TAB
       tab==="quiz" && h("div",null,
+        dailyBar(),
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,alignItems:"center"}},
           h("div",{style:{display:"flex",gap:4}},
             h("button",{onClick:function(){setQuizMode("flash")},style:btn(quizMode==="flash")},"🃏 Flashcards"),
@@ -487,6 +556,29 @@ function App() {
 
       // PROGRESS TAB (estilo Memrise)
       tab==="progress" && h("div",null,
+        dailyBar(),
+        // card de tema de conversação
+        h("div",{style:{background:"linear-gradient(135deg,#1e2a4a,#1E293B)",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid #1E3A5F"}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6,marginBottom:convTheme?10:6}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:"#A78BFA"}},"💬 Tema de conversação (Gemini / Grok)"),
+            h("div",{style:{display:"flex",gap:6}},
+              h("button",{onClick:buildConversation,disabled:reviewCount===0,style:{padding:"6px 12px",borderRadius:8,background:reviewCount===0?"#1E293B":"#7C3AED",border:"none",color:reviewCount===0?"#475569":"#fff",cursor:reviewCount===0?"not-allowed":"pointer",fontSize:11,fontWeight:700}}, convTheme?"🔄 Novo tema":"🎲 Gerar tema")
+            )
+          ),
+          reviewCount===0
+            ? h("div",{style:{fontSize:11,color:"#64748B"}},"Marque palavras como 🔖 Fixar para gerar um tema de conversa com base no que você está aprendendo.")
+            : !convTheme
+              ? h("div",{style:{fontSize:11,color:"#64748B"}},"Gere um tema e um roteiro pronto (em inglês) usando as suas "+reviewCount+" palavras 'Para fixação', para colar no Gemini ou Grok.")
+              : h("div",null,
+                  h("div",{style:{fontSize:14,fontWeight:700,color:"#E2E8F0",marginBottom:6}},"📌 "+convTheme.theme),
+                  h("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}},
+                    convTheme.words.map(function(w,i){return h("span",{key:i,style:{fontSize:10,background:"#0F172A",border:"1px solid #334155",borderRadius:12,padding:"2px 8px",color:"#94A3B8"}}, w[1]);})
+                  ),
+                  h("div",{style:{fontSize:10,color:"#64748B",marginBottom:4}},"Prompt pronto para colar no Gemini / Grok:"),
+                  h("textarea",{readOnly:true,value:convTheme.prompt,onFocus:function(e){e.target.select()},style:{width:"100%",minHeight:130,padding:"10px",borderRadius:8,border:"1px solid #334155",background:"#0a1120",color:"#CBD5E1",fontSize:11,fontFamily:"monospace",lineHeight:1.5,resize:"vertical",outline:"none",boxSizing:"border-box"}}),
+                  h("button",{onClick:copyPrompt,style:{marginTop:8,padding:"8px 16px",borderRadius:8,background:copied?"#166534":"#3B82F6",border:"none",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:700}}, copied?"✓ Copiado!":"📋 Copiar prompt")
+                )
+        ),
         h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:14}},
           [["new","⬜ Não aprendidas",bucketNewCount,"#94A3B8"],["review","🔖 Para fixação",reviewCount,"#FACC15"],["learned","🎓 Aprendidas",learnedCount,"#4ADE80"]].map(function(b){
             var active=progFilter===b[0];
