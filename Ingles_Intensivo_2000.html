@@ -34,6 +34,48 @@ const PHRASES = window.__PHRASES__;
 const PER_PAGE = 50;
 function shuffle(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
 const ROUND_SIZE = 20;
+// Gírias / contrações / inglês informal (ids a partir de 90001 para não colidir)
+const SLANG = [
+  [90001,"wanna","quer / vou (want to)","I wanna go home.","slang","= want to"],
+  [90002,"gonna","vai / vou (going to)","It's gonna rain.","slang","= going to"],
+  [90003,"gotta","tem que (got to)","I gotta leave now.","slang","= got to"],
+  [90004,"gimme","me dá (give me)","Gimme a second.","slang","= give me"],
+  [90005,"lemme","deixa eu (let me)","Lemme check that.","slang","= let me"],
+  [90006,"kinda","meio que (kind of)","I'm kinda tired.","slang","= kind of"],
+  [90007,"sorta","meio que (sort of)","It's sorta weird.","slang","= sort of"],
+  [90008,"dunno","não sei (don't know)","I dunno, maybe.","slang","= don't know"],
+  [90009,"ain't","não é / não tem","It ain't easy.","slang","informal: isn't/aren't/hasn't"],
+  [90010,"y'all","vocês (you all)","Y'all coming?","slang","= you all"],
+  [90011,"gotcha","entendi / peguei","Gotcha, no problem.","slang","= got you"],
+  [90012,"wassup","e aí? (what's up)","Hey, wassup?","slang","= what's up"],
+  [90013,"cuz","porque / mano","Cuz I said so.","slang","= because / cousin"],
+  [90014,"nope","não (informal)","Nope, not today.","slang","informal 'no'"],
+  [90015,"yeah","sim / é","Yeah, sure!","slang","informal 'yes'"],
+  [90016,"yep","sim (informal)","Yep, that's it.","slang","informal 'yes'"],
+  [90017,"nah","nada / não","Nah, I'm good.","slang","informal 'no'"],
+  [90018,"gonna hang out","sair / passar tempo","Let's hang out later.","slang","hang out = sair com amigos"],
+  [90019,"chill","relaxar / tranquilo","Let's just chill.","slang","relaxar"],
+  [90020,"cool","legal / massa","That's so cool!","slang","legal"],
+  [90021,"awesome","incrível","This is awesome!","slang","incrível"],
+  [90022,"buddy","amigo / parceiro","Thanks, buddy!","slang","amigo"],
+  [90023,"folks","pessoal / galera","Hey folks!","slang","pessoal"],
+  [90024,"guy / guys","cara / galera","Come on, guys!","slang","cara / pessoal"],
+  [90025,"stuff","coisas / troços","I have stuff to do.","slang","coisas"],
+  [90026,"broke","duro / sem grana","I'm broke this month.","slang","sem dinheiro"],
+  [90027,"hang on","espera aí","Hang on a sec.","slang","espera"],
+  [90028,"no way","de jeito nenhum","No way! Really?","slang","impossível / não creio"],
+  [90029,"my bad","foi mal / culpa minha","My bad, sorry!","slang","erro meu"],
+  [90030,"hell yeah","com certeza!","Hell yeah, let's go!","slang","com toda certeza"],
+  [90031,"tons of","um monte de","I have tons of work.","slang","muito"],
+  [90032,"grab","pegar / dar um pulo","Let's grab a coffee.","slang","pegar / comer algo"],
+  [90033,"mess up","estragar / errar","Don't mess it up.","slang","errar"],
+  [90034,"hang out (n.)","rolê","It was a nice hangout.","slang","encontro informal"],
+  [90035,"ASAP","o quanto antes","Call me ASAP.","slang","as soon as possible"],
+  [90036,"gonna wanna","vai querer","You're gonna wanna see this.","slang","going to want to"]
+];
+// categorias extras
+CATS.push({id:"slang",label:"🗣️ Gírias",color:"#EAB308"});
+CATS.push({id:"custom",label:"⭐ Minhas",color:"#14B8A6"});
 
 function ProfileScreen({onSelect}) {
   const [profiles, setProfiles] = useState(() => {
@@ -77,7 +119,14 @@ function App() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [notes, setNotes] = useState({});
-  const [learned, setLearned] = useState({});
+  const [status, setStatus] = useState({});
+  const [custom, setCustom] = useState([]);
+  const [progFilter, setProgFilter] = useState("review");
+  const [slangSearch, setSlangSearch] = useState("");
+  const [newEn, setNewEn] = useState("");
+  const [newPt, setNewPt] = useState("");
+  const [newEx, setNewEx] = useState("");
+  const [newCatW, setNewCatW] = useState("custom");
   const [editing, setEditing] = useState(null);
   const [noteInput, setNoteInput] = useState("");
   const [tense, setTense] = useState("Simple Present");
@@ -98,21 +147,45 @@ function App() {
   useEffect(() => {
     if (!profile) return;
     try { const s = localStorage.getItem("eng_notes_"+profile); if(s) setNotes(JSON.parse(s)); else setNotes({}); } catch { setNotes({}); }
-    try { const l = localStorage.getItem("eng_learned_"+profile); if(l) setLearned(JSON.parse(l)); else setLearned({}); } catch { setLearned({}); }
+    try { const c = localStorage.getItem("eng_custom_"+profile); if(c) setCustom(JSON.parse(c)); else setCustom([]); } catch { setCustom([]); }
+    try {
+      const st = localStorage.getItem("eng_status_"+profile);
+      if(st){ setStatus(JSON.parse(st)); }
+      else {
+        // migração: converte o formato antigo "eng_learned_" em status "learned"
+        const l = localStorage.getItem("eng_learned_"+profile);
+        if(l){ const old=JSON.parse(l); const mig={}; Object.keys(old).forEach(function(k){mig[k]="learned";}); setStatus(mig); localStorage.setItem("eng_status_"+profile, JSON.stringify(mig)); }
+        else setStatus({});
+      }
+    } catch { setStatus({}); }
   }, [profile]);
+
+  const allW = W.concat(SLANG).concat(custom);
+  const wordById = (id) => allW.find(function(w){return w[0]==id;});
 
   const saveNotes = (n) => { setNotes(n); if(profile) localStorage.setItem("eng_notes_"+profile, JSON.stringify(n)); };
   const openNote = (id) => { setEditing(id); setNoteInput(notes[id] || ""); };
   const submitNote = () => { const n={...notes}; if(noteInput.trim()) n[editing]=noteInput.trim(); else delete n[editing]; saveNotes(n); setEditing(null); };
-  const saveLearned = (l) => { setLearned(l); if(profile) localStorage.setItem("eng_learned_"+profile, JSON.stringify(l)); };
-  const toggleLearned = (id) => { const l={...learned}; if(l[id]) delete l[id]; else l[id]=1; saveLearned(l); };
-  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setLearned({}); };
+  const saveStatus = (s) => { setStatus(s); if(profile) localStorage.setItem("eng_status_"+profile, JSON.stringify(s)); };
+  const setWordStatus = (id, st) => { const s={...status}; if(st==="new"||!st) delete s[id]; else s[id]=st; saveStatus(s); };
+  const saveCustom = (c) => { setCustom(c); if(profile) localStorage.setItem("eng_custom_"+profile, JSON.stringify(c)); };
+  const addCustom = () => {
+    if(!newEn.trim()||!newPt.trim()) return;
+    var id = "u"+Date.now();
+    var w = [id, newEn.trim(), newPt.trim(), newEx.trim()||"—", newCatW||"custom", ""];
+    saveCustom(custom.concat([w]));
+    // já envia a palavra nova para a revisão (fixação)
+    setWordStatus(id, "review");
+    setNewEn(""); setNewPt(""); setNewEx("");
+  };
+  const removeCustom = (id) => { saveCustom(custom.filter(function(w){return w[0]!==id;})); const s={...status}; delete s[id]; saveStatus(s); };
+  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setStatus({}); setCustom([]); };
 
   const newRound = (ids) => {
     var pool;
-    if (ids && ids.length) pool = W.filter(function(w){return ids.indexOf(w[0])>=0;});
-    else if (quizMode==="review") pool = W.filter(function(w){return learned[w[0]] && (quizCat==="all"||w[4]===quizCat);});
-    else pool = W.filter(function(w){return quizCat==="all"||w[4]===quizCat;});
+    if (ids && ids.length) pool = allW.filter(function(w){return ids.indexOf(w[0])>=0;});
+    else if (quizMode==="review") pool = allW.filter(function(w){return status[w[0]]==="review" && (quizCat==="all"||w[4]===quizCat);});
+    else pool = allW.filter(function(w){return quizCat==="all"||w[4]===quizCat;});
     var lim = ids ? pool.length : Math.min(pool.length, ROUND_SIZE);
     setDeck(shuffle(pool).slice(0, lim));
     setDeckIdx(0); setFlipped(false); setQuizDone(false); setMcPicked(null);
@@ -154,16 +227,29 @@ function App() {
 
   if (!profile) return h(ProfileScreen, {onSelect: (id, name) => { setProfile(id); setProfileName(name); }});
 
-  const filtered = W.filter(w => (cat==="all"||w[4]===cat) && (!search||w[1].toLowerCase().includes(search.toLowerCase())||w[2].toLowerCase().includes(search.toLowerCase())));
+  const filtered = allW.filter(w => (cat==="all"||w[4]===cat) && (!search||w[1].toLowerCase().includes(search.toLowerCase())||w[2].toLowerCase().includes(search.toLowerCase())));
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const pageWords = filtered.slice((page-1)*PER_PAGE, page*PER_PAGE);
   const catColor = (id) => (CATS.find(c=>c.id===id)||{}).color||"#6B7280";
   const catLabel = (id) => { const c=CATS.find(c=>c.id===id); return c?c.label.split(" ").slice(1).join(" "):id; };
   const filteredHomo = HOMO.filter(h=>!homoSearch||h.w.toLowerCase().includes(homoSearch.toLowerCase()));
-  const notedWords = W.filter(w=>notes[w[0]]);
-  const learnedWords = W.filter(w=>learned[w[0]]);
+  const notedWords = allW.filter(w=>notes[w[0]]);
+  const learnedWords = allW.filter(w=>status[w[0]]==="learned");
+  const reviewWords = allW.filter(w=>status[w[0]]==="review");
   const learnedCount = learnedWords.length;
+  const reviewCount = reviewWords.length;
+  const bucketNewCount = allW.length - learnedCount - reviewCount;
+  const slangWords = SLANG.filter(w=>!slangSearch||w[1].toLowerCase().includes(slangSearch.toLowerCase())||w[2].toLowerCase().includes(slangSearch.toLowerCase()));
+  // buckets estilo Memrise
+  const bucketWords = progFilter==="learned" ? learnedWords
+    : progFilter==="review" ? reviewWords
+    : allW.filter(w=>!status[w[0]]);
   const tenses = Object.keys(PHRASES);
+  const statusSel = (id) => { var st=status[id]||"new"; return h("select",{value:st,onChange:function(e){setWordStatus(id,e.target.value)},title:"⬜ Nova · 🔖 Fixar (enviar p/ flashcards) · 🎓 Aprendi",style:{padding:"3px 4px",borderRadius:5,border:"1px solid "+(st==="learned"?"#166534":st==="review"?"#854D0E":"#334155"),background:"#1E293B",color:st==="learned"?"#4ADE80":st==="review"?"#FACC15":"#94A3B8",fontSize:10,fontWeight:600,cursor:"pointer",outline:"none"}},
+    h("option",{value:"new"},"⬜ Nova"),
+    h("option",{value:"review"},"🔖 Fixar"),
+    h("option",{value:"learned"},"🎓 Aprendi")
+  ); };
   const btn = (cond) => ({padding:"7px 14px",borderRadius:8,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:cond?"#3B82F6":"#1E293B",color:cond?"#fff":"#94A3B8"});
   const qFrontIdx = quizDir==="en2pt"?1:2;
   const qBackIdx = quizDir==="en2pt"?2:1;
@@ -175,10 +261,10 @@ function App() {
       h("div",{style:{maxWidth:1200,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}},
         h("div",null,
           h("div",{style:{fontWeight:800,fontSize:18,color:"#60A5FA"}},"🎓 Inglês Intensivo"),
-          h("div",{style:{fontSize:10,color:"#475569"}}, W.length+" palavras · 👤 "+profileName+(learnedCount>0?" · 🎓 "+learnedCount+" aprendidas":"")+(Object.keys(notes).length>0?" · "+Object.keys(notes).length+" anotações ✓":""))
+          h("div",{style:{fontSize:10,color:"#475569"}}, allW.length+" palavras · 👤 "+profileName+(reviewCount>0?" · 🔖 "+reviewCount+" p/ fixar":"")+(learnedCount>0?" · 🎓 "+learnedCount+" aprendidas":""))
         ),
         h("div",{style:{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}},
-          [["vocab","📚 Vocab"],["phrases","💬 Verbos"],["homo","🔄 Homônimos"],["quiz","🃏 Quiz"],["learned","🎓 Aprendidas"],["mynotes","📝 Notas"]].map(function(t){return h("button",{key:t[0],onClick:function(){setTab(t[0])},style:btn(tab===t[0])},t[1])}),
+          [["vocab","📚 Vocab"],["phrases","💬 Verbos"],["homo","🔄 Homônimos"],["slang","🗣️ Gírias"],["quiz","🃏 Quiz"],["progress","📊 Progresso"],["mynotes","📝 Notas"]].map(function(t){return h("button",{key:t[0],onClick:function(){setTab(t[0])},style:btn(tab===t[0])},t[1])}),
           h("button",{onClick:logout,style:{padding:"5px 10px",borderRadius:8,background:"#7F1D1D",border:"none",color:"#FCA5A5",cursor:"pointer",fontSize:10,marginLeft:4}},"Sair")
         )
       )
@@ -198,11 +284,11 @@ function App() {
         h("div",{style:{overflowX:"auto"}},
           h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
             h("thead",null,h("tr",{style:{background:"#1E293B"}},
-              ["#","🇬🇧","🇧🇷","Exemplo","Cat.","Extra","🎓","📝"].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontWeight:700,whiteSpace:"nowrap",fontSize:11}},hd)})
+              ["#","🇬🇧","🇧🇷","Exemplo","Cat.","Extra","Status","📝"].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontWeight:700,whiteSpace:"nowrap",fontSize:11}},hd)})
             )),
             h("tbody",null,pageWords.map(function(w,i){
               var id=w[0],en=w[1],pt=w[2],ex=w[3],c=w[4],extra=w[5];
-              var hasNote=!!notes[id],isEd=editing===id,isLearned=!!learned[id];
+              var hasNote=!!notes[id],isEd=editing===id,st=status[id]||"new";
               return h("tr",{key:id,style:{background:i%2===0?"#0F172A":"#0d1525",borderBottom:"1px solid #1a2540"}},
                 h("td",{style:{padding:"5px 4px",color:"#334155",fontWeight:600,fontSize:10}},id),
                 h("td",{style:{padding:"5px 4px",fontWeight:700,color:"#E2E8F0",whiteSpace:"nowrap"}},en),
@@ -211,7 +297,11 @@ function App() {
                 h("td",{style:{padding:"5px 4px"}},h("span",{style:{padding:"1px 6px",borderRadius:8,fontSize:9,fontWeight:700,background:catColor(c)+"1a",color:catColor(c),whiteSpace:"nowrap"}},catLabel(c))),
                 h("td",{style:{padding:"5px 4px",color:"#334155",fontSize:9,fontFamily:"monospace",whiteSpace:"nowrap",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis"}},extra),
                 h("td",{style:{padding:"5px 4px"}},
-                  h("button",{onClick:function(){toggleLearned(id)},title:isLearned?"Remover de aprendidas":"Marcar como aprendida",style:{padding:"2px 7px",borderRadius:5,border:"1px solid",cursor:"pointer",fontSize:10,fontWeight:600,borderColor:isLearned?"#22C55E":"#1E3A5F",background:isLearned?"#22C55E1a":"transparent",color:isLearned?"#4ADE80":"#334155"}},isLearned?"🎓✓":"🎓")
+                  h("select",{value:st,onChange:function(e){setWordStatus(id,e.target.value)},title:"Enviar para flashcards / marcar como aprendida",style:{padding:"3px 4px",borderRadius:5,border:"1px solid "+(st==="learned"?"#166534":st==="review"?"#854D0E":"#334155"),background:"#1E293B",color:st==="learned"?"#4ADE80":st==="review"?"#FACC15":"#94A3B8",fontSize:10,fontWeight:600,cursor:"pointer",outline:"none"}},
+                    h("option",{value:"new"},"⬜ Nova"),
+                    h("option",{value:"review"},"🔖 Fixar"),
+                    h("option",{value:"learned"},"🎓 Aprendi")
+                  )
                 ),
                 h("td",{style:{padding:"5px 4px",minWidth:100}},
                   isEd?h("div",{style:{display:"flex",gap:3,alignItems:"center"}},
@@ -287,7 +377,7 @@ function App() {
           h("div",{style:{display:"flex",gap:4}},
             h("button",{onClick:function(){setQuizMode("flash")},style:btn(quizMode==="flash")},"🃏 Flashcards"),
             h("button",{onClick:function(){setQuizMode("test")},style:btn(quizMode==="test")},"✍️ Quiz"),
-            h("button",{onClick:function(){setQuizMode("review")},style:btn(quizMode==="review")},"🎓 Revisar aprendidas")
+            h("button",{onClick:function(){setQuizMode("review")},style:btn(quizMode==="review")},"🔖 Revisar (fixação)")
           ),
           h("div",{style:{flex:1}}),
           h("button",{onClick:function(){setQuizDir(quizDir==="en2pt"?"pt2en":"en2pt")},style:{padding:"6px 12px",borderRadius:8,border:"1px solid #334155",background:"#1E293B",color:"#94A3B8",cursor:"pointer",fontSize:11,fontWeight:600}}, quizDir==="en2pt"?"🇬🇧 → 🇧🇷":"🇧🇷 → 🇬🇧"),
@@ -305,7 +395,7 @@ function App() {
             h("div",{style:{height:"100%",width:((quizDone?100:Math.round((deckIdx/deck.length)*100))+"%"),background:"linear-gradient(90deg,#3B82F6,#60A5FA)",transition:"width .2s"}})
           )
         ),
-        deck.length===0 && h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#475569",fontSize:13}}, quizMode==="review"?"Nenhuma palavra aprendida ainda. Marque palavras com 🎓 na aba Vocab ou nos flashcards.":"Nenhuma palavra nesta categoria."),
+        deck.length===0 && h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#475569",fontSize:13}}, quizMode==="review"?"Nenhuma palavra para fixação. Marque palavras como 🔖 Fixar (na aba Vocab, Gírias, Progresso ou nos flashcards) para revisá-las aqui.":"Nenhuma palavra nesta categoria."),
 
         (deck.length>0 && quizDone) && (function(){
           var kn = quizMode==="test"?mcStats.correct:flashStats.know;
@@ -326,7 +416,8 @@ function App() {
 
         (deck.length>0 && !quizDone && (quizMode==="flash"||quizMode==="review") && qCur) && h("div",null,
           h("div",{onClick:function(){setFlipped(!flipped)},style:{position:"relative",background:flipped?"#0d2b4a":"#1E293B",borderRadius:16,border:"2px solid "+(flipped?"#3B82F6":"#1E3A5F"),padding:"38px 24px",minHeight:190,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",textAlign:"center",transition:"all .15s"}},
-            learned[qCur[0]] && h("div",{style:{position:"absolute",top:10,right:12,fontSize:10,fontWeight:700,color:"#4ADE80",background:"#22C55E1a",border:"1px solid #166534",borderRadius:12,padding:"2px 8px"}},"🎓 Aprendida"),
+            status[qCur[0]]==="learned" && h("div",{style:{position:"absolute",top:10,right:12,fontSize:10,fontWeight:700,color:"#4ADE80",background:"#22C55E1a",border:"1px solid #166534",borderRadius:12,padding:"2px 8px"}},"🎓 Aprendida"),
+            status[qCur[0]]==="review" && h("div",{style:{position:"absolute",top:10,right:12,fontSize:10,fontWeight:700,color:"#FACC15",background:"#EAB3081a",border:"1px solid #854D0E",borderRadius:12,padding:"2px 8px"}},"🔖 Para fixação"),
             h("div",{style:{fontSize:10,color:"#475569",marginBottom:10,textTransform:"uppercase",letterSpacing:1}}, flipped?"Resposta":"Clique para revelar"),
             h("div",{style:{fontSize:30,fontWeight:800,color:"#E2E8F0",marginBottom:flipped?14:0}}, qCur[qFrontIdx]),
             flipped && h("div",{style:{fontSize:22,fontWeight:700,color:"#60A5FA",marginBottom:10}}, qCur[qBackIdx]),
@@ -337,10 +428,13 @@ function App() {
             h("button",{onClick:function(){flashAnswer(false)},style:{flex:1,padding:"12px",borderRadius:10,background:"#3b0e0e",border:"1px solid #7F1D1D",color:"#F87171",cursor:"pointer",fontSize:14,fontWeight:700}}, quizMode==="review"?"❌ Rever mais":"❌ Não sabia"),
             h("button",{onClick:function(){flashAnswer(true)},style:{flex:1,padding:"12px",borderRadius:10,background:"#0e3b1e",border:"1px solid #166534",color:"#4ADE80",cursor:"pointer",fontSize:14,fontWeight:700}}, quizMode==="review"?"✅ Domino":"✅ Sabia")
           ),
-          h("div",{style:{marginTop:8}},
+          h("div",{style:{display:"flex",gap:8,marginTop:8}},
             quizMode==="review"
-              ? h("button",{onClick:function(){var cur=qCur;toggleLearned(cur[0]);advance();},style:{width:"100%",padding:"10px",borderRadius:10,background:"transparent",border:"1px dashed #7F1D1D",color:"#F87171",cursor:"pointer",fontSize:12,fontWeight:600}},"➖ Remover das aprendidas")
-              : h("button",{onClick:function(){var cur=qCur;if(!learned[cur[0]])toggleLearned(cur[0]);advance();},style:{width:"100%",padding:"10px",borderRadius:10,background:learned[qCur[0]]?"#22C55E1a":"transparent",border:"1px solid "+(learned[qCur[0]]?"#166534":"#1E3A5F"),color:learned[qCur[0]]?"#4ADE80":"#64748B",cursor:"pointer",fontSize:12,fontWeight:600}}, learned[qCur[0]]?"🎓 Já está em Aprendidas — avançar":"🎓 Já aprendi esta palavra")
+              ? h("button",{onClick:function(){var cur=qCur;setWordStatus(cur[0],"learned");advance();},style:{flex:1,padding:"10px",borderRadius:10,background:"#22C55E1a",border:"1px solid #166534",color:"#4ADE80",cursor:"pointer",fontSize:12,fontWeight:700}},"🎓 Já domino — mover p/ Aprendidas")
+              : h("button",{onClick:function(){var cur=qCur;setWordStatus(cur[0],"review");advance();},style:{flex:1,padding:"10px",borderRadius:10,background:status[qCur[0]]==="review"?"#EAB3081a":"transparent",border:"1px solid "+(status[qCur[0]]==="review"?"#854D0E":"#1E3A5F"),color:status[qCur[0]]==="review"?"#FACC15":"#64748B",cursor:"pointer",fontSize:12,fontWeight:600}}, status[qCur[0]]==="review"?"🔖 Já na revisão — avançar":"🔖 Enviar p/ flashcards (fixar)"),
+            (quizMode==="flash"
+              ? h("button",{onClick:function(){var cur=qCur;setWordStatus(cur[0],"learned");advance();},style:{flex:1,padding:"10px",borderRadius:10,background:status[qCur[0]]==="learned"?"#22C55E1a":"transparent",border:"1px solid "+(status[qCur[0]]==="learned"?"#166534":"#1E3A5F"),color:status[qCur[0]]==="learned"?"#4ADE80":"#64748B",cursor:"pointer",fontSize:12,fontWeight:600}}, status[qCur[0]]==="learned"?"🎓 Aprendida — avançar":"🎓 Já aprendi")
+              : h("button",{onClick:function(){var cur=qCur;setWordStatus(cur[0],"new");advance();},style:{flex:1,padding:"10px",borderRadius:10,background:"transparent",border:"1px dashed #7F1D1D",color:"#F87171",cursor:"pointer",fontSize:12,fontWeight:600}},"➖ Tirar da revisão"))
           ),
           h("div",{style:{textAlign:"center",fontSize:10,color:"#334155",marginTop:8}},"Dica: clique na carta para virar")
         ),
@@ -365,42 +459,82 @@ function App() {
         )
       ),
 
-      // LEARNED TAB
-      tab==="learned" && h("div",null,
-        learnedWords.length===0?
-          h("div",{style:{textAlign:"center",padding:"50px 20px",color:"#334155"}},
-            h("div",{style:{fontSize:48,marginBottom:10}},"🎓"),
-            h("p",{style:{fontSize:14,color:"#475569"}},"Nenhuma palavra aprendida de "+profileName+"."),
-            h("p",{style:{fontSize:12,color:"#334155"}},"Na aba Vocab (ou nos flashcards), clique 🎓 para marcar uma palavra como aprendida.")
-          ):
-          h("div",null,
-            h("div",{style:{display:"flex",gap:8,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",marginBottom:12}},
-              h("div",{style:{fontSize:12,color:"#64748B"}},
-                h("strong",{style:{color:"#4ADE80"}},learnedWords.length)," palavras aprendidas de ",h("strong",{style:{color:"#F59E0B"}},profileName)
-              ),
-              h("button",{onClick:function(){setQuizMode("review");setQuizCat("all");setTab("quiz");},style:{padding:"8px 14px",borderRadius:10,background:"#22C55E1a",border:"1px solid #166534",color:"#4ADE80",cursor:"pointer",fontSize:12,fontWeight:700}},"🃏 Revisar em flashcards")
+      // SLANG TAB
+      tab==="slang" && h("div",null,
+        h("p",{style:{color:"#64748B",fontSize:12,marginBottom:4}},
+          "Inglês do dia a dia — ",h("strong",{style:{color:"#EAB308"}},"gírias, contrações e expressões informais")," (",SLANG.length," itens)"
+        ),
+        h("p",{style:{color:"#475569",fontSize:11,marginBottom:10}},"Use o seletor de status para enviar qualquer gíria para 🔖 fixação (revisão em flashcards)."),
+        h("input",{placeholder:"🔍 Buscar gíria...",value:slangSearch,onChange:function(e){setSlangSearch(e.target.value)},style:{width:"100%",padding:"8px 12px",borderRadius:8,border:"1px solid #334155",background:"#1E293B",color:"#E2E8F0",fontSize:12,outline:"none",marginBottom:12,boxSizing:"border-box"}}),
+        h("div",{style:{overflowX:"auto"}},
+          h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+            h("thead",null,h("tr",{style:{background:"#1E293B"}},
+              ["🇬🇧","🇧🇷","Exemplo","Nota","Status"].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontSize:11}},hd)})
+            )),
+            h("tbody",null,slangWords.map(function(w,i){
+              var id=w[0];
+              return h("tr",{key:id,style:{background:i%2===0?"#0F172A":"#0d1525",borderBottom:"1px solid #1a2540"}},
+                h("td",{style:{padding:"6px",fontWeight:700,color:"#FACC15",whiteSpace:"nowrap"}},w[1]),
+                h("td",{style:{padding:"6px",color:"#94A3B8",fontSize:11}},w[2]),
+                h("td",{style:{padding:"6px",color:"#475569",fontStyle:"italic",fontSize:10}},w[3]),
+                h("td",{style:{padding:"6px",color:"#64748B",fontSize:10,fontFamily:"monospace"}},w[5]),
+                h("td",{style:{padding:"6px"}}, statusSel(id))
+              )
+            }))
+          )
+        )
+      ),
+
+      // PROGRESS TAB (estilo Memrise)
+      tab==="progress" && h("div",null,
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:14}},
+          [["new","⬜ Não aprendidas",bucketNewCount,"#94A3B8"],["review","🔖 Para fixação",reviewCount,"#FACC15"],["learned","🎓 Aprendidas",learnedCount,"#4ADE80"]].map(function(b){
+            var active=progFilter===b[0];
+            return h("button",{key:b[0],onClick:function(){setProgFilter(b[0])},style:{padding:"14px 10px",borderRadius:12,border:"2px solid "+(active?b[3]:"#1E3A5F"),background:active?b[3]+"1a":"#1E293B",cursor:"pointer",textAlign:"left"}},
+              h("div",{style:{fontSize:24,fontWeight:800,color:b[3]}}, b[2]),
+              h("div",{style:{fontSize:11,color:active?b[3]:"#64748B",fontWeight:600,marginTop:2}}, b[1])
+            );
+          })
+        ),
+        // adicionar palavra própria
+        h("div",{style:{background:"#1E293B",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid #1E3A5F"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:"#2DD4BF",marginBottom:8}},"⭐ Adicionar palavra que aprendi por outros meios"),
+          h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
+            h("input",{value:newEn,onChange:function(e){setNewEn(e.target.value)},placeholder:"Inglês *",style:{flex:"1 1 120px",padding:"8px 10px",borderRadius:8,border:"1px solid #334155",background:"#0F172A",color:"#E2E8F0",fontSize:12,outline:"none"}}),
+            h("input",{value:newPt,onChange:function(e){setNewPt(e.target.value)},placeholder:"Português *",style:{flex:"1 1 120px",padding:"8px 10px",borderRadius:8,border:"1px solid #334155",background:"#0F172A",color:"#E2E8F0",fontSize:12,outline:"none"}}),
+            h("input",{value:newEx,onChange:function(e){setNewEx(e.target.value)},placeholder:"Exemplo (opcional)",style:{flex:"1 1 160px",padding:"8px 10px",borderRadius:8,border:"1px solid #334155",background:"#0F172A",color:"#E2E8F0",fontSize:12,outline:"none"}}),
+            h("select",{value:newCatW,onChange:function(e){setNewCatW(e.target.value)},style:{padding:"8px 10px",borderRadius:8,border:"1px solid #334155",background:"#0F172A",color:"#94A3B8",fontSize:12,cursor:"pointer",outline:"none"}},
+              CATS.filter(function(c){return c.id!=="all";}).map(function(c){return h("option",{key:c.id,value:c.id},c.label)})
             ),
-            h("div",{style:{overflowX:"auto"}},
+            h("button",{onClick:addCustom,style:{padding:"8px 16px",borderRadius:8,background:"#14B8A6",border:"none",color:"#022c22",cursor:"pointer",fontSize:12,fontWeight:800}},"+ Adicionar")
+          ),
+          h("div",{style:{fontSize:10,color:"#475569",marginTop:6}},"A palavra entra automaticamente em 🔖 Para fixação (aparece nos flashcards de revisão).")
+        ),
+        h("div",{style:{display:"flex",gap:8,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",marginBottom:10}},
+          h("div",{style:{fontSize:12,color:"#64748B"}}, "Mostrando: ",h("strong",{style:{color:"#E2E8F0"}}, progFilter==="new"?"Não aprendidas":progFilter==="review"?"Para fixação":"Aprendidas")," ("+bucketWords.length+")"),
+          progFilter==="review" && reviewCount>0 && h("button",{onClick:function(){setQuizMode("review");setQuizCat("all");setTab("quiz");},style:{padding:"8px 14px",borderRadius:10,background:"#EAB3081a",border:"1px solid #854D0E",color:"#FACC15",cursor:"pointer",fontSize:12,fontWeight:700}},"🃏 Revisar em flashcards")
+        ),
+        bucketWords.length===0
+          ? h("div",{style:{textAlign:"center",padding:"40px 20px",color:"#334155",fontSize:13}}, progFilter==="review"?"Nenhuma palavra para fixação. Marque palavras como 🔖 Fixar.":progFilter==="learned"?"Nenhuma palavra aprendida ainda.":"Tudo classificado! 🎉")
+          : h("div",{style:{overflowX:"auto"}},
               h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
                 h("thead",null,h("tr",{style:{background:"#1E293B"}},
-                  ["#","🇬🇧","🇧🇷","Exemplo","Cat.",""].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontSize:11}},hd)})
+                  ["🇬🇧","🇧🇷","Exemplo","Cat.","Status",""].map(function(hd){return h("th",{key:hd,style:{padding:"7px 6px",textAlign:"left",borderBottom:"1px solid #334155",color:"#60A5FA",fontSize:11}},hd)})
                 )),
-                h("tbody",null,learnedWords.map(function(w,i){
-                  var id=w[0],en=w[1],pt=w[2],ex=w[3],c=w[4];
+                h("tbody",null,bucketWords.slice(0,150).map(function(w,i){
+                  var id=w[0],c=w[4],isCustom=(""+id).charAt(0)==="u";
                   return h("tr",{key:id,style:{background:i%2===0?"#0F172A":"#0d1525",borderBottom:"1px solid #1a2540"}},
-                    h("td",{style:{padding:"6px",color:"#334155",fontSize:10}},id),
-                    h("td",{style:{padding:"6px",fontWeight:700,color:"#E2E8F0",whiteSpace:"nowrap"}},en),
-                    h("td",{style:{padding:"6px",color:"#94A3B8",fontSize:11}},pt),
-                    h("td",{style:{padding:"6px",color:"#475569",fontStyle:"italic",fontSize:10,maxWidth:180}},ex),
+                    h("td",{style:{padding:"6px",fontWeight:700,color:"#E2E8F0",whiteSpace:"nowrap"}}, w[1], isCustom&&h("span",{style:{marginLeft:5,fontSize:9,color:"#2DD4BF"}},"⭐")),
+                    h("td",{style:{padding:"6px",color:"#94A3B8",fontSize:11}},w[2]),
+                    h("td",{style:{padding:"6px",color:"#475569",fontStyle:"italic",fontSize:10,maxWidth:180}},w[3]),
                     h("td",{style:{padding:"6px"}},h("span",{style:{padding:"1px 6px",borderRadius:8,fontSize:9,fontWeight:700,background:catColor(c)+"1a",color:catColor(c),whiteSpace:"nowrap"}},catLabel(c))),
-                    h("td",{style:{padding:"6px"}},
-                      h("button",{onClick:function(){toggleLearned(id)},title:"Remover das aprendidas",style:{padding:"2px 7px",borderRadius:5,background:"#3b0e0e",border:"none",color:"#F87171",cursor:"pointer",fontSize:10}},"➖")
-                    )
+                    h("td",{style:{padding:"6px"}}, statusSel(id)),
+                    h("td",{style:{padding:"6px"}}, isCustom && h("button",{onClick:function(){removeCustom(id)},title:"Excluir palavra própria",style:{padding:"2px 7px",borderRadius:5,background:"#3b0e0e",border:"none",color:"#F87171",cursor:"pointer",fontSize:10}},"🗑️"))
                   )
                 }))
-              )
+              ),
+              bucketWords.length>150 && h("div",{style:{textAlign:"center",fontSize:11,color:"#475569",marginTop:8}}, "Mostrando 150 de "+bucketWords.length+". Use os flashcards ou filtros para estudar o restante.")
             )
-          )
       ),
 
       // NOTES TAB
