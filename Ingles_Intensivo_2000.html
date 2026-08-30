@@ -35,6 +35,7 @@ const PER_PAGE = 50;
 function shuffle(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
 const ROUND_SIZE = 20;
 function todayStr(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function yesterdayStr(){var d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 // temas de conversação por categoria (para praticar com Gemini/Grok)
 const THEME_MAP = {
   food:"Pedir comida em um restaurante", kitchen:"Cozinhar uma receita com um amigo",
@@ -142,6 +143,8 @@ function App() {
   const [progFilter, setProgFilter] = useState("review");
   const [daily, setDaily] = useState({date:"",count:0});
   const [goal, setGoal] = useState(10);
+  const [streak, setStreak] = useState({last:"",days:0});
+  const [learnedAt, setLearnedAt] = useState({});
   const [convTheme, setConvTheme] = useState(null);
   const [copied, setCopied] = useState(false);
   const [slangSearch, setSlangSearch] = useState("");
@@ -172,6 +175,8 @@ function App() {
     try { const c = localStorage.getItem("eng_custom_"+profile); if(c) setCustom(JSON.parse(c)); else setCustom([]); } catch { setCustom([]); }
     try { const d = localStorage.getItem("eng_daily_"+profile); if(d){ const dd=JSON.parse(d); setDaily(dd.date===todayStr()?dd:{date:todayStr(),count:0}); } else setDaily({date:todayStr(),count:0}); } catch { setDaily({date:todayStr(),count:0}); }
     try { const g = localStorage.getItem("eng_goal_"+profile); if(g) setGoal(parseInt(g)||10); else setGoal(10); } catch { setGoal(10); }
+    try { const sk = localStorage.getItem("eng_streak_"+profile); if(sk) setStreak(JSON.parse(sk)); else setStreak({last:"",days:0}); } catch { setStreak({last:"",days:0}); }
+    try { const la = localStorage.getItem("eng_learnedat_"+profile); if(la) setLearnedAt(JSON.parse(la)); else setLearnedAt({}); } catch { setLearnedAt({}); }
     setConvTheme(null);
     try {
       const st = localStorage.getItem("eng_status_"+profile);
@@ -192,7 +197,10 @@ function App() {
   const openNote = (id) => { setEditing(id); setNoteInput(notes[id] || ""); };
   const submitNote = () => { const n={...notes}; if(noteInput.trim()) n[editing]=noteInput.trim(); else delete n[editing]; saveNotes(n); setEditing(null); };
   const saveStatus = (s) => { setStatus(s); if(profile) localStorage.setItem("eng_status_"+profile, JSON.stringify(s)); };
-  const setWordStatus = (id, st) => { const s={...status}; if(st==="new"||!st) delete s[id]; else s[id]=st; saveStatus(s); };
+  const setWordStatus = (id, st) => {
+    const s={...status}; if(st==="new"||!st) delete s[id]; else s[id]=st; saveStatus(s);
+    if(st==="learned" && !learnedAt[id]){ const la={...learnedAt}; la[id]=Date.now(); setLearnedAt(la); if(profile) localStorage.setItem("eng_learnedat_"+profile, JSON.stringify(la)); }
+  };
   const saveCustom = (c) => { setCustom(c); if(profile) localStorage.setItem("eng_custom_"+profile, JSON.stringify(c)); };
   const addCustom = () => {
     if(!newEn.trim()||!newPt.trim()) return;
@@ -207,10 +215,16 @@ function App() {
   const saveGoal = (g) => { var v=Math.max(1,Math.min(200,g||1)); setGoal(v); if(profile) localStorage.setItem("eng_goal_"+profile, String(v)); };
   const bumpDaily = () => {
     var t=todayStr();
-    var d = (daily.date===t) ? {date:t,count:daily.count+1} : {date:t,count:1};
+    var firstToday = (daily.date!==t) || (daily.count||0)===0;
+    var d = (daily.date===t) ? {date:t,count:(daily.count||0)+1} : {date:t,count:1};
     setDaily(d); if(profile) localStorage.setItem("eng_daily_"+profile, JSON.stringify(d));
+    if(firstToday){
+      var y=yesterdayStr();
+      var ns = (streak.last===y) ? {last:t,days:(streak.days||0)+1} : {last:t,days:1};
+      setStreak(ns); if(profile) localStorage.setItem("eng_streak_"+profile, JSON.stringify(ns));
+    }
   };
-  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setStatus({}); setCustom([]); setConvTheme(null); };
+  const logout = () => { setProfile(null); setProfileName(""); setNotes({}); setStatus({}); setCustom([]); setConvTheme(null); setStreak({last:"",days:0}); setLearnedAt({}); };
 
   const newRound = (ids) => {
     var pool;
@@ -272,6 +286,8 @@ function App() {
   const learnedCount = learnedWords.length;
   const reviewCount = reviewWords.length;
   const bucketNewCount = allW.length - learnedCount - reviewCount;
+  const recentLearned = learnedWords.slice().sort(function(a,b){return (learnedAt[b[0]]||0)-(learnedAt[a[0]]||0);}).slice(0,8);
+  const convPoolCount = reviewCount + recentLearned.length;
   const slangWords = SLANG.filter(w=>!slangSearch||w[1].toLowerCase().includes(slangSearch.toLowerCase())||w[2].toLowerCase().includes(slangSearch.toLowerCase()));
   // buckets estilo Memrise
   const bucketWords = progFilter==="learned" ? learnedWords
@@ -285,9 +301,13 @@ function App() {
   ); };
   const todayCount = (daily.date===todayStr()) ? daily.count : 0;
   const goalPct = Math.min(100, Math.round((todayCount/Math.max(1,goal))*100));
+  const currentStreak = (streak.last===todayStr()||streak.last===yesterdayStr()) ? (streak.days||0) : 0;
   const dailyBar = () => h("div",{style:{background:"#1E293B",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid "+(todayCount>=goal?"#166534":"#1E3A5F")}},
     h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:6}},
-      h("div",{style:{fontSize:12,fontWeight:700,color:todayCount>=goal?"#4ADE80":"#60A5FA"}}, todayCount>=goal?"🎉 Meta diária concluída!":"🎯 Meta diária de revisão"),
+      h("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
+        h("div",{style:{fontSize:12,fontWeight:700,color:todayCount>=goal?"#4ADE80":"#60A5FA"}}, todayCount>=goal?"🎉 Meta diária concluída!":"🎯 Meta diária de revisão"),
+        h("div",{style:{fontSize:12,fontWeight:800,color:currentStreak>0?"#FB923C":"#475569",background:currentStreak>0?"#7c2d1220":"transparent",border:"1px solid "+(currentStreak>0?"#9A3412":"#334155"),borderRadius:12,padding:"2px 9px"}}, "🔥 "+currentStreak+(currentStreak===1?" dia":" dias"))
+      ),
       h("div",{style:{display:"flex",alignItems:"center",gap:6}},
         h("span",{style:{fontSize:12,color:"#94A3B8"}}, todayCount+" / "+goal+" hoje"),
         h("button",{onClick:function(){saveGoal(goal-5)},style:{padding:"1px 8px",borderRadius:6,background:"#0F172A",border:"1px solid #334155",color:"#94A3B8",cursor:"pointer",fontSize:13,fontWeight:700}},"−"),
@@ -299,18 +319,24 @@ function App() {
     )
   );
   const buildConversation = () => {
-    if(reviewWords.length===0){ setConvTheme(null); return; }
-    var picked = shuffle(reviewWords).slice(0, Math.min(12, reviewWords.length));
-    var counts={}; picked.forEach(function(w){counts[w[4]]=(counts[w[4]]||0)+1;});
+    if(convPoolCount===0){ setConvTheme(null); return; }
+    // foco: palavras 'Para fixação'; manutenção: recém-aprendidas
+    var focusPick = shuffle(reviewWords).slice(0, Math.min(9, reviewWords.length));
+    var maintPick = shuffle(recentLearned).slice(0, Math.min(4, recentLearned.length));
+    var picked = focusPick.concat(maintPick);
+    if(picked.length===0) picked = shuffle(reviewWords.concat(recentLearned)).slice(0,12);
+    var counts={}; focusPick.concat(maintPick).forEach(function(w){counts[w[4]]=(counts[w[4]]||0)+1;});
     var mainCat=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];})[0];
     var theme = THEME_MAP[mainCat] || "Uma conversa do dia a dia";
-    var wl = picked.map(function(w){return w[1]+" ("+w[2]+")";});
-    var prompt = "Let's practice English conversation. I'm a Brazilian learner practicing new vocabulary.\n\n"
+    var focusWl = focusPick.map(function(w){return w[1]+" ("+w[2]+")";});
+    var maintWl = maintPick.map(function(w){return w[1]+" ("+w[2]+")";});
+    var prompt = "Let's practice English conversation. I'm a Brazilian learner practicing my vocabulary.\n\n"
       + "Topic: "+theme+".\n\n"
       + "Please have a natural, simple conversation with me about this topic. Try to use the words below, one or two at a time. After each of my replies, gently correct my mistakes and ask me a follow-up question to keep the conversation going.\n\n"
-      + "Words I'm learning:\n"+wl.join(", ")+"\n\n"
+      + (focusWl.length ? "Words I'm currently learning (please focus on these):\n"+focusWl.join(", ")+"\n\n" : "")
+      + (maintWl.length ? "Words I learned recently (please review them too, for maintenance):\n"+maintWl.join(", ")+"\n\n" : "")
       + "Start by greeting me and asking the first question.";
-    setConvTheme({theme:theme, words:picked, prompt:prompt});
+    setConvTheme({theme:theme, words:picked, focus:focusPick, maint:maintPick, prompt:prompt});
     setCopied(false);
   };
   const copyPrompt = () => {
@@ -562,17 +588,18 @@ function App() {
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6,marginBottom:convTheme?10:6}},
             h("div",{style:{fontSize:12,fontWeight:700,color:"#A78BFA"}},"💬 Tema de conversação (Gemini / Grok)"),
             h("div",{style:{display:"flex",gap:6}},
-              h("button",{onClick:buildConversation,disabled:reviewCount===0,style:{padding:"6px 12px",borderRadius:8,background:reviewCount===0?"#1E293B":"#7C3AED",border:"none",color:reviewCount===0?"#475569":"#fff",cursor:reviewCount===0?"not-allowed":"pointer",fontSize:11,fontWeight:700}}, convTheme?"🔄 Novo tema":"🎲 Gerar tema")
+              h("button",{onClick:buildConversation,disabled:convPoolCount===0,style:{padding:"6px 12px",borderRadius:8,background:convPoolCount===0?"#1E293B":"#7C3AED",border:"none",color:convPoolCount===0?"#475569":"#fff",cursor:convPoolCount===0?"not-allowed":"pointer",fontSize:11,fontWeight:700}}, convTheme?"🔄 Novo tema":"🎲 Gerar tema")
             )
           ),
-          reviewCount===0
-            ? h("div",{style:{fontSize:11,color:"#64748B"}},"Marque palavras como 🔖 Fixar para gerar um tema de conversa com base no que você está aprendendo.")
+          convPoolCount===0
+            ? h("div",{style:{fontSize:11,color:"#64748B"}},"Marque palavras como 🔖 Fixar (ou aprenda algumas 🎓) para gerar um tema de conversa com base no que você está aprendendo.")
             : !convTheme
-              ? h("div",{style:{fontSize:11,color:"#64748B"}},"Gere um tema e um roteiro pronto (em inglês) usando as suas "+reviewCount+" palavras 'Para fixação', para colar no Gemini ou Grok.")
+              ? h("div",{style:{fontSize:11,color:"#64748B"}},"Gere um tema e um roteiro pronto (em inglês) com as suas "+reviewCount+" palavras 'Para fixação'"+(recentLearned.length>0?" + "+recentLearned.length+" recém-aprendidas (manutenção)":"")+", para colar no Gemini ou Grok.")
               : h("div",null,
                   h("div",{style:{fontSize:14,fontWeight:700,color:"#E2E8F0",marginBottom:6}},"📌 "+convTheme.theme),
-                  h("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}},
-                    convTheme.words.map(function(w,i){return h("span",{key:i,style:{fontSize:10,background:"#0F172A",border:"1px solid #334155",borderRadius:12,padding:"2px 8px",color:"#94A3B8"}}, w[1]);})
+                  h("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}},
+                    (convTheme.focus||[]).map(function(w,i){return h("span",{key:"f"+i,style:{fontSize:10,background:"#EAB3081a",border:"1px solid #854D0E",borderRadius:12,padding:"2px 8px",color:"#FACC15"}}, "🔖 "+w[1]);}),
+                    (convTheme.maint||[]).map(function(w,i){return h("span",{key:"m"+i,style:{fontSize:10,background:"#22C55E1a",border:"1px solid #166534",borderRadius:12,padding:"2px 8px",color:"#4ADE80"}}, "🎓 "+w[1]);})
                   ),
                   h("div",{style:{fontSize:10,color:"#64748B",marginBottom:4}},"Prompt pronto para colar no Gemini / Grok:"),
                   h("textarea",{readOnly:true,value:convTheme.prompt,onFocus:function(e){e.target.select()},style:{width:"100%",minHeight:130,padding:"10px",borderRadius:8,border:"1px solid #334155",background:"#0a1120",color:"#CBD5E1",fontSize:11,fontFamily:"monospace",lineHeight:1.5,resize:"vertical",outline:"none",boxSizing:"border-box"}}),
