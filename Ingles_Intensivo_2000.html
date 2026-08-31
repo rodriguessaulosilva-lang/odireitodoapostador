@@ -294,11 +294,13 @@ function App() {
     : progFilter==="review" ? reviewWords
     : allW.filter(w=>!status[w[0]]);
   const tenses = Object.keys(PHRASES);
-  const statusSel = (id) => { var st=status[id]||"new"; return h("select",{value:st,onChange:function(e){setWordStatus(id,e.target.value)},title:"⬜ Nova · 🔖 Fixar (enviar p/ flashcards) · 🎓 Aprendi",style:{padding:"3px 4px",borderRadius:5,border:"1px solid "+(st==="learned"?"#166534":st==="review"?"#854D0E":"#334155"),background:"#1E293B",color:st==="learned"?"#4ADE80":st==="review"?"#FACC15":"#94A3B8",fontSize:10,fontWeight:600,cursor:"pointer",outline:"none"}},
-    h("option",{value:"new"},"⬜ Nova"),
-    h("option",{value:"review"},"🔖 Fixar"),
-    h("option",{value:"learned"},"🎓 Aprendi")
-  ); };
+  const statusSel = (id) => { var st=status[id]||"new";
+    var mk=function(target,emoji,onColor,onBg,onBorder,tip){ var on=st===target; return h("button",{onClick:function(){setWordStatus(id, on?"new":target)},title:tip,style:{padding:"3px 8px",borderRadius:6,border:"1px solid "+(on?onBorder:"#334155"),background:on?onBg:"transparent",color:on?onColor:"#475569",cursor:"pointer",fontSize:12,lineHeight:1}}, emoji+(on?" ✓":"")); };
+    return h("div",{style:{display:"flex",gap:4}},
+      mk("review","🔖","#FACC15","#EAB3081a","#854D0E","Fixar (enviar p/ flashcards)"),
+      mk("learned","🎓","#4ADE80","#22C55E1a","#166534","Marcar como aprendida")
+    );
+  };
   const todayCount = (daily.date===todayStr()) ? daily.count : 0;
   const goalPct = Math.min(100, Math.round((todayCount/Math.max(1,goal))*100));
   const currentStreak = (streak.last===todayStr()||streak.last===yesterdayStr()) ? (streak.days||0) : 0;
@@ -382,7 +384,7 @@ function App() {
             )),
             h("tbody",null,pageWords.map(function(w,i){
               var id=w[0],en=w[1],pt=w[2],ex=w[3],c=w[4],extra=w[5];
-              var hasNote=!!notes[id],isEd=editing===id,st=status[id]||"new";
+              var hasNote=!!notes[id],isEd=editing===id;
               return h("tr",{key:id,style:{background:i%2===0?"#0F172A":"#0d1525",borderBottom:"1px solid #1a2540"}},
                 h("td",{style:{padding:"5px 4px",color:"#334155",fontWeight:600,fontSize:10}},id),
                 h("td",{style:{padding:"5px 4px",fontWeight:700,color:"#E2E8F0",whiteSpace:"nowrap"}},en),
@@ -390,13 +392,7 @@ function App() {
                 h("td",{style:{padding:"5px 4px",color:"#475569",fontStyle:"italic",fontSize:10,maxWidth:180}},ex),
                 h("td",{style:{padding:"5px 4px"}},h("span",{style:{padding:"1px 6px",borderRadius:8,fontSize:9,fontWeight:700,background:catColor(c)+"1a",color:catColor(c),whiteSpace:"nowrap"}},catLabel(c))),
                 h("td",{style:{padding:"5px 4px",color:"#334155",fontSize:9,fontFamily:"monospace",whiteSpace:"nowrap",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis"}},extra),
-                h("td",{style:{padding:"5px 4px"}},
-                  h("select",{value:st,onChange:function(e){setWordStatus(id,e.target.value)},title:"Enviar para flashcards / marcar como aprendida",style:{padding:"3px 4px",borderRadius:5,border:"1px solid "+(st==="learned"?"#166534":st==="review"?"#854D0E":"#334155"),background:"#1E293B",color:st==="learned"?"#4ADE80":st==="review"?"#FACC15":"#94A3B8",fontSize:10,fontWeight:600,cursor:"pointer",outline:"none"}},
-                    h("option",{value:"new"},"⬜ Nova"),
-                    h("option",{value:"review"},"🔖 Fixar"),
-                    h("option",{value:"learned"},"🎓 Aprendi")
-                  )
-                ),
+                h("td",{style:{padding:"5px 4px"}}, statusSel(id)),
                 h("td",{style:{padding:"5px 4px",minWidth:100}},
                   isEd?h("div",{style:{display:"flex",gap:3,alignItems:"center"}},
                     h("input",{value:noteInput,onChange:function(e){setNoteInput(e.target.value)},onKeyDown:function(e){if(e.key==="Enter")submitNote();if(e.key==="Escape")setEditing(null)},autoFocus:true,placeholder:"Nota...",style:{padding:"3px 6px",borderRadius:5,border:"1px solid #3B82F6",background:"#1E293B",color:"#E2E8F0",fontSize:10,width:100,outline:"none"}}),
