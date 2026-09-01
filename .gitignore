@@ -1,0 +1,11 @@
+# Dependências
+node_modules/
+# Variáveis de ambiente / segredos (NUNCA versionar chaves de API)
+.env
+.env.*
+!.env.example
+# Builds e temporários
+dist/
+build/
+*.log
+.DS_Store
