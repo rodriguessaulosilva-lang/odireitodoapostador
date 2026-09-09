@@ -1,0 +1,145 @@
+/* ==========================================================================
+   LAYOUT DO DOSSIÊ — NÃO EDITAR.
+   A marca (cores, fonte, logo, timbre) mora em identidade.css.
+   Otimizado para WeasyPrint (capa, sumário com nº de página, timbre).
+   ========================================================================== */
+
+/* ---------- Página e timbre (cabeçalho/rodapé repetidos) ---------- */
+@page {
+  size: A4;
+  margin: 26mm 20mm 24mm 20mm;
+
+  @top-left {
+    content: var(--escritorio-nome);
+    font-family: var(--fonte-titulo);
+    font-size: 8.5pt;
+    color: var(--cor-primaria);
+    vertical-align: bottom;
+    padding-bottom: 3mm;
+  }
+  @top-right {
+    content: "Dossiê — " string(cliente);
+    font-family: var(--fonte-corpo);
+    font-size: 8pt;
+    color: var(--cor-suave);
+    vertical-align: bottom;
+    padding-bottom: 3mm;
+  }
+  @bottom-left {
+    content: var(--escritorio-linha2);
+    font-family: var(--fonte-corpo);
+    font-size: 7pt;
+    color: var(--cor-suave);
+    vertical-align: top;
+    padding-top: 3mm;
+  }
+  @bottom-right {
+    content: "Pág. " counter(page) " / " counter(pages);
+    font-family: var(--fonte-corpo);
+    font-size: 7.5pt;
+    color: var(--cor-suave);
+    vertical-align: top;
+    padding-top: 3mm;
+  }
+}
+
+/* filete dourado sob o cabeçalho */
+@page { @top-center { content: ""; } }
+
+/* ---------- Capa (sem timbre, fundo cheio) ---------- */
+@page capa {
+  margin: 0;
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* ---------- Base ---------- */
+html { color: var(--cor-texto); }
+body {
+  font-family: var(--fonte-corpo);
+  font-size: 10.5pt;
+  line-height: 1.5;
+  margin: 0;
+}
+h1, h2, h3 { font-family: var(--fonte-titulo); color: var(--cor-primaria); }
+
+/* ---------- CAPA ---------- */
+.capa {
+  page: capa;
+  background: var(--cor-fundo-capa);
+  color: #fff;
+  min-height: 297mm;
+  box-sizing: border-box;
+  padding: 32mm 26mm;
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+}
+.capa__topo { display: flex; align-items: center; gap: 14px; }
+.capa__logo {
+  width: var(--logo-largura); height: var(--logo-largura);
+  background-image: var(--logo);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+/* o nome do cliente (este elemento) alimenta o cabeçalho das páginas */
+.capa__cliente { string-set: cliente content(); }
+.capa__escritorio { font-family: var(--fonte-titulo); font-size: 15pt; letter-spacing: .5px; }
+.capa__filete { height: 2px; background: var(--cor-secundaria); margin: 26mm 0 10mm; width: 60mm; }
+.capa__titulo { font-family: var(--fonte-titulo); font-size: 34pt; line-height: 1.1; margin: 0 0 6mm; }
+.capa__subtitulo { font-size: 13pt; color: #d7deea; margin: 0 0 auto; }
+.capa__dados { margin-top: auto; font-size: 10.5pt; color: #eef2f8; }
+.capa__dados dt { color: var(--cor-secundaria); font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1px; margin-top: 5mm; }
+.capa__dados dd { margin: 1mm 0 0; font-size: 12pt; }
+.capa__resumo { margin-top: 8mm; padding-top: 6mm; border-top: 1px solid rgba(255,255,255,.25); font-size: 10pt; color: #e8edf5; }
+.capa__resumo h3 { color: var(--cor-secundaria); font-size: 9pt; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 2mm; }
+
+/* ---------- SUMÁRIO ---------- */
+.sumario { page-break-after: always; }
+.sumario h2 { font-size: 18pt; border-bottom: 2px solid var(--cor-secundaria); padding-bottom: 3mm; margin: 0 0 6mm; }
+.sumario ul { list-style: none; margin: 0; padding: 0; }
+.sumario > ul > li { margin: 4mm 0 1mm; font-weight: bold; color: var(--cor-primaria); font-family: var(--fonte-titulo); font-size: 12pt; }
+.sumario ul ul { margin: 1mm 0 2mm; }
+.sumario ul ul li { font-weight: normal; font-family: var(--fonte-corpo); font-size: 10pt; color: var(--cor-texto); margin: .8mm 0; }
+.sumario a { color: inherit; text-decoration: none; }
+.sumario a::after {
+  content: leader('.') " " target-counter(attr(href), page);
+  color: var(--cor-suave);
+}
+
+/* ---------- SEÇÕES ---------- */
+.secao { page-break-before: always; }
+.secao__cabecalho { border-left: 4px solid var(--cor-secundaria); padding-left: 6mm; margin-bottom: 6mm; }
+.secao__num { color: var(--cor-secundaria); font-size: 9pt; letter-spacing: 2px; text-transform: uppercase; }
+.secao__cabecalho h2 { font-size: 20pt; margin: 1mm 0 0; }
+
+/* ---------- FICHA DE DOCUMENTO ---------- */
+.doc { page-break-inside: avoid; margin: 0 0 8mm; }
+.doc__ficha {
+  background: var(--cor-fundo-ficha);
+  border: 1px solid var(--cor-linha);
+  border-left: 3px solid var(--cor-primaria);
+  border-radius: 3px;
+  padding: 5mm 6mm;
+}
+.doc__titulo { font-family: var(--fonte-titulo); font-size: 12.5pt; color: var(--cor-primaria); margin: 0 0 3mm; }
+.doc__meta { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.doc__meta th {
+  text-align: left; color: var(--cor-secundaria); text-transform: uppercase;
+  letter-spacing: .5px; font-size: 7.5pt; width: 34mm; padding: 1mm 4mm 1mm 0;
+  vertical-align: top; font-weight: bold;
+}
+.doc__meta td { padding: 1mm 0; vertical-align: top; }
+.doc__resumo { margin-top: 3mm; font-size: 9.5pt; color: var(--cor-texto); }
+.doc__resumo strong { color: var(--cor-primaria); }
+.doc__conteudo {
+  margin-top: 3mm; font-size: 9pt; color: #333; line-height: 1.45;
+  white-space: pre-wrap; border-top: 1px dashed var(--cor-linha); padding-top: 3mm;
+}
+.doc__origem { font-size: 7.5pt; color: var(--cor-suave); margin-top: 2mm; font-style: italic; }
+
+/* aviso de placeholder / marcação */
+.nao-localizado { color: #9a3412; font-style: italic; }

@@ -1,0 +1,38 @@
+/* ==========================================================================
+   IDENTIDADE VISUAL — Rodrigues e Dantas Advocacia
+   --------------------------------------------------------------------------
+   ESTE É O ÚNICO ARQUIVO QUE VOCÊ PRECISA EDITAR para aplicar a marca.
+   Troque as cores, a fonte, o logo e os dados do timbre abaixo.
+   Os valores atuais são um PADRÃO PROVISÓRIO sóbrio — substitua pelos
+   oficiais do escritório. Não edite "dossie.css".
+   ========================================================================== */
+
+:root {
+  /* --- CORES --- (use os códigos hex oficiais do escritório) */
+  --cor-primaria:    #1F3A5F;  /* azul-marinho — capa, títulos, cabeçalho   */
+  --cor-secundaria:  #A67C33;  /* dourado — detalhes, filetes, destaques    */
+  --cor-texto:       #1a1a1a;  /* corpo do texto                            */
+  --cor-suave:       #5b6472;  /* legendas, metadados                       */
+  --cor-linha:       #d9dee6;  /* filetes e bordas                          */
+  --cor-fundo-capa:  #1F3A5F;  /* fundo da capa                             */
+  --cor-fundo-ficha: #f4f6f9;  /* fundo das fichas de documento             */
+
+  /* --- TIPOGRAFIA --- */
+  /* Títulos: serifada, sóbria. Corpo: sem serifa, legível.
+     Use as fontes da marca; deixei fallbacks que existem no ambiente.     */
+  --fonte-titulo: "EB Garamond", "Liberation Serif", "Georgia", serif;
+  --fonte-corpo:  "Liberation Sans", "Helvetica", "Arial", sans-serif;
+
+  /* --- LOGO --- */
+  /* Aponte para o arquivo do logo (coloque-o nesta pasta assets/).
+     Ex.: url("logo-rodrigues-dantas.png"). Provisório: monograma SVG.      */
+  --logo: url("logo-placeholder.svg");
+  --logo-largura: 120px;   /* largura do logo na capa                       */
+  --logo-largura-cabecalho: 26px; /* logo pequeno no cabeçalho das páginas  */
+
+  /* --- DADOS DO TIMBRE (rodapé) --- */
+  /* Preencha com os dados oficiais. Aparecem no rodapé de cada página.     */
+  --escritorio-nome: "Rodrigues e Dantas Advocacia";
+  --escritorio-linha2: "OAB/__ nº ____  •  contato@rodriguesdantas.adv.br  •  (00) 0000-0000";
+  --escritorio-endereco: "Endereço do escritório — Cidade/UF";
+}

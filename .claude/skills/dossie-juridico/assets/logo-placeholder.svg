@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- LOGO PROVISORIO (monograma). Substitua este arquivo pelo logo oficial
+       do Rodrigues e Dantas Advocacia (ver identidade.css, variavel logo). -->
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#A67C33" stroke-width="2.5"/>
+  <text x="60" y="74" text-anchor="middle" font-family="Georgia, 'Liberation Serif', serif"
+        font-size="46" font-weight="700" fill="#ffffff" letter-spacing="2">RD</text>
+  <text x="60" y="98" text-anchor="middle" font-family="Georgia, 'Liberation Serif', serif"
+        font-size="8" fill="#A67C33" letter-spacing="3">ADVOCACIA</text>
+</svg>

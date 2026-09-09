@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!--
+  MODELO DE DOSSIÊ — Rodrigues e Dantas Advocacia
+  Copie este arquivo para a pasta de trabalho do caso, ao lado de
+  identidade.css e dossie.css (copie os dois de ../assets/), e preencha.
+  Instruções rápidas:
+   - Troque os [[CAMPOS]].
+   - No sumário, cada <a href="#id"> aponta para uma âncora id="..." no corpo.
+     NÃO escreva números de página — são calculados automaticamente.
+   - Repita o bloco .doc para cada documento; repita .secao para cada seção.
+   - Apague as seções que não tiverem documentos.
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="identidade.css">
+  <link rel="stylesheet" href="dossie.css">
+  <title>Dossiê — [[NOME DO CLIENTE]]</title>
+</head>
+<body>
+
+  <!-- ============== CAPA ============== -->
+  <!-- data-cliente alimenta o cabeçalho das páginas internas -->
+  <section class="capa" data-cliente="[[NOME DO CLIENTE]]">
+    <div class="capa__topo">
+      <div class="capa__logo"></div>
+      <div class="capa__escritorio">Rodrigues e Dantas Advocacia</div>
+    </div>
+
+    <div class="capa__filete"></div>
+    <h1 class="capa__titulo">Dossiê do Caso</h1>
+    <p class="capa__subtitulo">[[Área — ex.: Direito de Família · Divórcio e Partilha]]</p>
+
+    <dl class="capa__dados">
+      <dt>Cliente</dt><dd class="capa__cliente">[[NOME DO CLIENTE]]</dd>
+      <dt>Processo nº</dt><dd>[[nº do processo ou "Fase extrajudicial"]]</dd>
+      <dt>Vara / Comarca</dt><dd>[[vara e comarca, ou "—"]]</dd>
+      <dt>Data</dt><dd>[[dd/mm/aaaa]]</dd>
+    </dl>
+
+    <div class="capa__resumo">
+      <h3>Resumo do caso</h3>
+      <p>[[Síntese objetiva de 5–12 linhas: partes, objeto, estágio,
+      pontos de atenção. Sem adjetivação.]]</p>
+    </div>
+  </section>
+
+  <!-- ============== SUMÁRIO ============== -->
+  <section class="sumario">
+    <h2>Sumário</h2>
+    <ul>
+      <li><a href="#sec-identificacao">1. Identificação das partes</a>
+        <ul>
+          <li><a href="#doc-1">1.1 [[Título do documento]]</a></li>
+          <li><a href="#doc-2">1.2 [[Título do documento]]</a></li>
+        </ul>
+      </li>
+      <li><a href="#sec-comprovantes">2. Comprovantes e situação patrimonial</a>
+        <ul>
+          <li><a href="#doc-3">2.1 [[Título do documento]]</a></li>
+        </ul>
+      </li>
+      <li><a href="#sec-contratos">3. Contratos, títulos e documentos do objeto</a>
+        <ul>
+          <li><a href="#doc-4">3.1 [[Título do documento]]</a></li>
+        </ul>
+      </li>
+      <!-- Acrescente itens para as seções 4 a 7 conforme houver documentos -->
+    </ul>
+  </section>
+
+  <!-- ============== SEÇÃO 1 ============== -->
+  <section class="secao" id="sec-identificacao">
+    <div class="secao__cabecalho">
+      <div class="secao__num">Seção 1</div>
+      <h2>Identificação das partes</h2>
+    </div>
+
+    <!-- bloco repetível: uma ficha por documento -->
+    <article class="doc" id="doc-1">
+      <div class="doc__ficha">
+        <div class="doc__titulo">1.1 [[Título do documento]]</div>
+        <table class="doc__meta">
+          <tr><th>Tipo</th><td>[[tipo]]</td></tr>
+          <tr><th>Data</th><td>[[dd/mm/aaaa ou "sem data"]]</td></tr>
+          <tr><th>Partes / valores</th><td>[[partes e valores citados]]</td></tr>
+          <tr><th>Arquivo</th><td>[[nome_do_arquivo.pdf]]</td></tr>
+        </table>
+        <div class="doc__resumo"><strong>Resumo.</strong> [[1–3 linhas]]</div>
+        <!-- opcional: trecho/transcrição do documento -->
+        <div class="doc__conteudo">[[texto extraído relevante, ou apague este bloco]]</div>
+      </div>
+    </article>
+
+    <article class="doc" id="doc-2">
+      <div class="doc__ficha">
+        <div class="doc__titulo">1.2 [[Título do documento]]</div>
+        <table class="doc__meta">
+          <tr><th>Tipo</th><td>[[tipo]]</td></tr>
+          <tr><th>Data</th><td>[[data]]</td></tr>
+          <tr><th>Partes / valores</th><td>[[...]]</td></tr>
+          <tr><th>Arquivo</th><td>[[arquivo]]</td></tr>
+        </table>
+        <div class="doc__resumo"><strong>Resumo.</strong> [[...]]</div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============== SEÇÃO 2 ============== -->
+  <section class="secao" id="sec-comprovantes">
+    <div class="secao__cabecalho">
+      <div class="secao__num">Seção 2</div>
+      <h2>Comprovantes e situação patrimonial</h2>
+    </div>
+    <article class="doc" id="doc-3">
+      <div class="doc__ficha">
+        <div class="doc__titulo">2.1 [[Título do documento]]</div>
+        <table class="doc__meta">
+          <tr><th>Tipo</th><td>[[tipo]]</td></tr>
+          <tr><th>Data</th><td>[[data]]</td></tr>
+          <tr><th>Partes / valores</th><td>[[...]]</td></tr>
+          <tr><th>Arquivo</th><td>[[arquivo]]</td></tr>
+        </table>
+        <div class="doc__resumo"><strong>Resumo.</strong> [[...]]</div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ============== SEÇÃO 3 ============== -->
+  <section class="secao" id="sec-contratos">
+    <div class="secao__cabecalho">
+      <div class="secao__num">Seção 3</div>
+      <h2>Contratos, títulos e documentos do objeto</h2>
+    </div>
+    <article class="doc" id="doc-4">
+      <div class="doc__ficha">
+        <div class="doc__titulo">3.1 [[Título do documento]]</div>
+        <table class="doc__meta">
+          <tr><th>Tipo</th><td>[[tipo]]</td></tr>
+          <tr><th>Data</th><td>[[data]]</td></tr>
+          <tr><th>Partes / valores</th><td>[[...]]</td></tr>
+          <tr><th>Arquivo</th><td>[[arquivo]]</td></tr>
+        </table>
+        <div class="doc__resumo"><strong>Resumo.</strong> [[...]]</div>
+      </div>
+    </article>
+  </section>
+
+  <!-- Repita o padrão para as seções 4 (Provas e comunicações),
+       5 (Peças processuais), 6 (Procuração e honorários) e 7 (Outros). -->
+
+</body>
+</html>
