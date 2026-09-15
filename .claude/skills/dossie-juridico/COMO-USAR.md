@@ -72,7 +72,31 @@ provisório.
 
 ---
 
-## 5. Dúvidas comuns
+## 5. Tamanho do arquivo (limite de 12 MB)
+
+O texto do dossiê é levíssimo (poucos KB). O que pesa são os **documentos
+escaneados e fotos** anexados. A skill garante que **nada saia acima de 12 MB**,
+nesta ordem:
+
+1. **Dossiê e anexos separados** — entrego o **dossiê analítico** (capa,
+   sumário e fichas) num arquivo leve e pesquisável, e os **originais** em
+   outro. Só isso já resolve quase sempre, e você envia os dois separados.
+2. **Compressão automática** — se os anexos ainda passarem do limite, reduzo a
+   resolução das imagens até caber (documentos continuam legíveis). Ex. real
+   do teste: **71 MB → 6 MB**. Para escaneados em preto-e-branco, fica menor
+   ainda.
+3. **Divisão em volumes** — se mesmo comprimido não couber num arquivo só
+   (caso raro, com centenas de páginas), divido em **Volume 1, Volume 2…**,
+   cada um abaixo de 12 MB, sem perder nenhuma página.
+
+Você não precisa fazer nada: eu aplico e te informo o tamanho final e, se
+dividi, quantos volumes. Se preferir um teto menor (ex.: 10 MB para e-mail),
+é só pedir.
+
+> Dica para reduzir na origem: escaneie em **preto-e-branco/tons de cinza** e
+> em **200–300 dpi** (em vez de colorido em alta), e prefira PDF a fotos.
+
+## 6. Dúvidas comuns
 
 - **Posso mudar a ordem das seções?** Sim — me diga a ordem que prefere, ou
   que use ordem cronológica.

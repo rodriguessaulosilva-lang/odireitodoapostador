@@ -96,14 +96,34 @@ para o LibreOffice.
 
 ### 5. (Opcional) Anexe os originais na íntegra
 ```
-python3 scripts/anexar_originais.py CAMINHO/Dossie_Cliente.pdf "Cliente_.../*.pdf" [imagens...] -o CAMINHO/Dossie_Cliente_final.pdf
+python3 scripts/anexar_originais.py CAMINHO/Dossie_Cliente.pdf "Cliente_.../*.pdf" [imagens...] -o CAMINHO/Anexos_Cliente.pdf
 ```
-Isso junta o dossiê gerado + os documentos originais como "Anexos na íntegra".
-Alternativamente, use a skill `pdf` para a fusão.
+**Recomendado: mantenha o dossiê analítico e os anexos como DOIS arquivos.**
+O dossiê analítico (capa+sumário+fichas) é leve e pesquisável; os anexos são o
+que pesa. Separá-los já resolve o limite de tamanho na maioria dos casos, e
+preserva o dossiê analítico 100% pesquisável.
 
-### 6. Entregue
-Salve o PDF final na pasta do caso e envie ao usuário com `SendUserFile`.
-Diga o que foi classificado em cada seção e o que ficou como "não localizado".
+### 6. Garanta o teto de tamanho (limite 12 MB)
+Rode o otimizador em **cada arquivo que possa passar do limite** (tipicamente
+o de anexos). Ele nunca deixa passar de `--max-mb` (padrão 11.5, com margem):
+```
+python3 scripts/otimizar_tamanho.py CAMINHO/Anexos_Cliente.pdf -o CAMINHO/Anexos_Cliente.pdf --max-mb 11.5
+```
+Cascata automática: (1) recompacta sem perdas → (2) reduz a resolução das
+imagens numa escada até caber (use `--cinza` para documentos escaneados P&B,
+reduz bem mais) → (3) se ainda não couber, divide em volumes
+(`..._vol1.pdf`, `..._vol2.pdf`), cada um abaixo do teto, sem perder páginas.
+
+Se você juntou tudo num arquivo só (dossiê + anexos), passe
+`--anexos-de N`, onde N é o número de páginas do dossiê analítico, para que
+essas páginas fiquem intactas e pesquisáveis (só os anexos são rasterizados).
+
+Verifique o tamanho final e confirme que cada arquivo entregue está < 12 MB.
+
+### 7. Entregue
+Salve o(s) PDF(s) na pasta do caso e envie ao usuário com `SendUserFile`.
+Diga o que foi classificado em cada seção, o que ficou como "não localizado",
+e — se houve compressão/divisão — informe o tamanho final e quantos volumes.
 
 ## Identidade visual do escritório
 
