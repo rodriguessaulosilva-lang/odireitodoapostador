@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/PageHeader";
 import FinanceiroView from "@/components/financeiro/FinanceiroView";
+import { ImportFinanceiroForm } from "@/components/financeiro/ImportFinanceiroForm";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,8 @@ export default async function FinanceiroPage() {
   return (
     <div className="pb-10">
       <PageHeader title="Financeiro" subtitle="Honorários, recebíveis e projeções" />
-      <div className="p-6">
+      <div className="p-6 space-y-6">
+        <ImportFinanceiroForm />
         <FinanceiroView
           recebiveis={recebiveis}
           rpvs={rpvList}
