@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { useAuth } from '@/lib/supabase/useAuth';
 
 interface ClienteData {
   nome: string;
@@ -31,7 +30,6 @@ const MESES_MAP: Record<string, [number, number]> = {
 };
 
 export function ImportFinanceiroForm() {
-  const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +110,6 @@ export function ImportFinanceiroForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({ clientes }),
       });

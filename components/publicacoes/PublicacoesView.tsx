@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/supabase/useAuth';
 
 interface Captura {
   id: string;
@@ -28,7 +27,6 @@ export default function PublicacoesView({
   capturas: Captura[];
   processos: Processo[];
 }) {
-  const { session } = useAuth();
   const [capturas, setCapturas] = useState(initialCapturas);
   const [isCapturando, setIsCapturando] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
@@ -43,9 +41,6 @@ export default function PublicacoesView({
     try {
       const res = await fetch('/api/admin/capturar-publicacoes', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
       });
 
       if (!res.ok) {
@@ -56,7 +51,7 @@ export default function PublicacoesView({
       const data = await res.json();
       setResultado(data);
 
-      // Recarregar capturas (simplificado - ideal seria usar SWR ou similar)
+      // Recarregar capturas
       window.location.reload();
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro desconhecido');

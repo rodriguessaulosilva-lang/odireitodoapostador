@@ -26,7 +26,7 @@ export default async function PublicacoesPage() {
   // Buscar dados
   const [
     { data: capturas },
-    { data: processos },
+    { data: processosData },
   ] = await Promise.all([
     supabase
       .from('captura_publicacoes')
@@ -38,16 +38,23 @@ export default async function PublicacoesPage() {
       .order('numero_cnj'),
   ]);
 
+  // Normalizar processos (pode vir com cliente como array)
+  const processos = (processosData ?? []).map((p: any) => ({
+    id: p.id,
+    numero_cnj: p.numero_cnj,
+    cliente: Array.isArray(p.cliente) ? p.cliente[0] : p.cliente,
+  }));
+
   return (
     <div className="pb-10">
-      <PageHeader
-        title="📋 Publicações"
+      <PageHeader 
+        title="📋 Publicações" 
         subtitle="Capturas do DJEN e conexão com processos"
       />
       <div className="p-6">
-        <PublicacoesView
+        <PublicacoesView 
           capturas={capturas ?? []}
-          processos={processos ?? []}
+          processos={processos}
         />
       </div>
     </div>
