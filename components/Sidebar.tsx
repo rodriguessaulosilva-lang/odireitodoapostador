@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Scale, Wallet, Users, CheckSquare, Megaphone, Settings, Scale as ScaleIcon,
+  LayoutDashboard, Scale, Wallet, Users, CheckSquare, Megaphone, Settings, Scale as ScaleIcon, FileText,
 } from "lucide-react";
 import SignOutButton from "./SignOutButton";
 import { initials } from "@/lib/format";
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/financeiro", label: "Financeiro", icon: Wallet },
   { href: "/clientes", label: "Clientes", icon: Users },
   { href: "/tarefas", label: "Tarefas", icon: CheckSquare },
+  { href: "/publicacoes", label: "Publicações", icon: FileText },
   { href: "/redes", label: "Redes sociais", icon: Megaphone },
 ];
 
